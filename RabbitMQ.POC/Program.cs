@@ -72,6 +72,11 @@ namespace RabbitMQ.POC
                     var message = Encoding.UTF8.GetString(body);
                     Console.Write(" [{1}] {0}", message, Thread.CurrentThread.ManagedThreadId);
                     Task.Delay(800).Wait();
+
+                    // return
+                    channel.BasicPublish("", ea.BasicProperties.ReplyTo, ea.BasicProperties, Encoding.UTF8.GetBytes($"DONE: {queue}"));
+
+
                     channel.BasicAck(ea.DeliveryTag, false);
                     Console.WriteLine("");
                     //Interlocked.Decrement(ref concurrent);
@@ -120,14 +125,27 @@ namespace RabbitMQ.POC
                 channel.ExchangeDeclare(topic, "fanout", true);
 
 
+
                 while (true)
                 {
+                    // prepare response queue
+                    var replyQueue = channel.QueueDeclare();
+                    var consumer = new QueueingBasicConsumer(channel);
+                    channel.BasicConsume(replyQueue.QueueName, true, consumer);
+
+
+
                     var message = string.Format("Random NO: #{0:000}", rnd.Next(1000));
+                    var corrId = Guid.NewGuid().ToString("N");
+
                     IBasicProperties props = channel.CreateBasicProperties();
                     props.ContentType = "text/plain";
                     //props.DeliveryMode = 2;
                     props.Expiration = "10000"; // per message expiration
 
+                    // setup return mechanism
+                    props.ReplyTo = replyQueue.QueueName;
+                    props.CorrelationId = corrId;
 
                     channel.BasicPublish(
                         exchange: topic,
@@ -136,6 +154,20 @@ namespace RabbitMQ.POC
                         body: Encoding.UTF8.GetBytes(message));
 
                     Console.WriteLine(" [x] Sent: {0}", message);
+
+
+                    BasicDeliverEventArgs ea;
+                    if (consumer.Queue.Dequeue(3000, out ea) == true)
+                    {
+                        // assure ea.BasicProperties.CorrelationId == corrId;
+                        Console.WriteLine("return: {0}", Encoding.UTF8.GetString(ea.Body));
+                    }
+                    else
+                    {
+                        Console.WriteLine("RPC timeout.");
+                    }
+                    channel.QueueDelete(replyQueue.QueueName);
+                    
 
                     Task.Delay(1000).Wait();
                 }
