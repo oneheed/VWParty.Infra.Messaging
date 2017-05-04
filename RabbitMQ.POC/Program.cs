@@ -20,6 +20,10 @@ namespace RabbitMQ.POC
                 return;
             }
 
+            Console.WriteLine("Mode:         {0}", args[0]);
+            Console.WriteLine("Exchange:     {0}", args[1]);
+            Console.WriteLine("Queue Name:   {0}", args[2]);
+
             switch (args[0].ToLower())
             {
                 case "pub":
@@ -27,7 +31,11 @@ namespace RabbitMQ.POC
                     break;
 
                 case "sub":
-                    StartSubscriber(args[1], args[2]);
+                    StartSubscriber(args[1], args[2], false);
+                    break;
+
+                case "rpc":
+                    StartSubscriber(args[1], args[2], true);
                     break;
 
                 default:
@@ -38,7 +46,7 @@ namespace RabbitMQ.POC
         private static Random rnd = new Random();
 
 
-        private static void StartSubscriber(string topic, string queue)
+        private static void StartSubscriber(string topic, string queue, bool response)
         {
             var factory = new ConnectionFactory()
             {
@@ -63,19 +71,26 @@ namespace RabbitMQ.POC
                 Console.WriteLine(" [*] Waiting for logs");
 
                 var consumer = new EventingBasicConsumer(channel);
-                consumer.Received += (model, ea) =>
+                EventHandler<BasicDeliverEventArgs> worker = (model, ea) =>
                 {
                     wait.Reset();
 
                     //Interlocked.Increment(ref concurrent);
                     var body = ea.Body;
                     var message = Encoding.UTF8.GetString(body);
-                    Console.Write(" [{1}] {0}", message, Thread.CurrentThread.ManagedThreadId);
-                    Task.Delay(800).Wait();
+                    Console.Write(" [{1}] process ({0}) ...", message, Thread.CurrentThread.ManagedThreadId);
+                    Task.Delay(500 + rnd.Next(100)).Wait();
+                    Console.Write("done!");
 
-                    // return
-                    channel.BasicPublish("", ea.BasicProperties.ReplyTo, ea.BasicProperties, Encoding.UTF8.GetBytes($"DONE: {queue}"));
-
+                    if (response)
+                    {
+                        // return
+                        channel.BasicPublish(
+                            "", 
+                            ea.BasicProperties.ReplyTo, 
+                            ea.BasicProperties, 
+                            Encoding.UTF8.GetBytes($"DONE: {queue}"));
+                    }
 
                     channel.BasicAck(ea.DeliveryTag, false);
                     Console.WriteLine("");
@@ -83,8 +98,8 @@ namespace RabbitMQ.POC
 
                     wait.Set();
                 };
+                consumer.Received += worker;
 
-                
 
                 //var consumer = new QueueingBasicConsumer(channel);
                 //while(true)
@@ -107,6 +122,7 @@ namespace RabbitMQ.POC
                 Console.ReadLine();
                 
                 wait.WaitOne();
+                consumer.Received -= worker;
                 Console.WriteLine("done");
                 //SpinWait.SpinUntil(() => { return concurrent == 0; });
                 //Console.WriteLine(concurrent);
@@ -153,19 +169,28 @@ namespace RabbitMQ.POC
                         basicProperties: props,
                         body: Encoding.UTF8.GetBytes(message));
 
-                    Console.WriteLine(" [x] Sent: {0}", message);
+                    Console.WriteLine();
+                    Console.WriteLine("Sent: {0}", message);
 
 
                     BasicDeliverEventArgs ea;
-                    if (consumer.Queue.Dequeue(3000, out ea) == true)
+                    TimeSpan timeout = TimeSpan.FromSeconds(5.0);
+
+                    DateTime waitUntil = DateTime.Now + timeout;
+                    for(int count = 0; count < 2; count++)
                     {
-                        // assure ea.BasicProperties.CorrelationId == corrId;
-                        Console.WriteLine("return: {0}", Encoding.UTF8.GetString(ea.Body));
+                        if (consumer.Queue.Dequeue((int)waitUntil.Subtract(DateTime.Now).TotalMilliseconds, out ea) == true)
+                        {
+                            // assure ea.BasicProperties.CorrelationId == corrId;
+                            Console.WriteLine("- return: {0}", Encoding.UTF8.GetString(ea.Body));
+                        }
+                        else
+                        {
+                            Console.WriteLine("* RPC timeout.");
+                            break;
+                        }
                     }
-                    else
-                    {
-                        Console.WriteLine("RPC timeout.");
-                    }
+                    Console.WriteLine("* Message process complete.");
                     channel.QueueDelete(replyQueue.QueueName);
                     
 
