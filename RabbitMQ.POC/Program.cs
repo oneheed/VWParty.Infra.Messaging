@@ -45,13 +45,15 @@ namespace RabbitMQ.POC
 
         private static Random rnd = new Random();
 
+        private static ConnectionFactory factory = new ConnectionFactory()
+        {
+            HostName = "172.19.3.166",
+            Port = 5672
+        };
 
         private static void StartSubscriber(string topic, string queue, bool response)
         {
-            var factory = new ConnectionFactory()
-            {
-                HostName = "ANDREW-UBUNTU"
-            };
+
 
             //int concurrent = 0;
             ManualResetEvent wait = new ManualResetEvent(false);
@@ -131,19 +133,16 @@ namespace RabbitMQ.POC
 
         private static void StartPublisher(string topic)
         {
-            var factory = new ConnectionFactory()
-            {
-                HostName = "ANDREW-UBUNTU"
-            };
             using (var connection = factory.CreateConnection())
             using (var channel = connection.CreateModel())
             {
                 channel.ExchangeDeclare(topic, "fanout", true);
 
 
-
+                long counter = 0;
                 while (true)
                 {
+                    counter++;
                     // prepare response queue
                     var replyQueue = channel.QueueDeclare();
                     var consumer = new QueueingBasicConsumer(channel);
@@ -151,7 +150,7 @@ namespace RabbitMQ.POC
 
 
 
-                    var message = string.Format("Random NO: #{0:000}", rnd.Next(1000));
+                    var message = string.Format("Serial NO: #{0:00000}", counter);
                     var corrId = Guid.NewGuid().ToString("N");
 
                     IBasicProperties props = channel.CreateBasicProperties();
