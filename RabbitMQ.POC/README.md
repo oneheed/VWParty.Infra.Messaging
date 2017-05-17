@@ -4,6 +4,11 @@
 
 # How To Run POC Code?
 
+
+0. launch boot2docker, launch rabbitmq container:
+```shell
+docker run -d --name rabbit -p 8080:15672 -p 5672:5672 rabbitmq:3-management
+```
 1. update rabbit mq server location (change HostName and Port)
 ```csharp
         private static ConnectionFactory factory = new ConnectionFactory()

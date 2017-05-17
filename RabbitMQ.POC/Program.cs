@@ -47,7 +47,7 @@ namespace RabbitMQ.POC
 
         private static ConnectionFactory factory = new ConnectionFactory()
         {
-            HostName = "172.19.3.166",
+            HostName = "127.0.0.1",
             Port = 5672
         };
 
