@@ -7,7 +7,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Zeus.Messaging
+namespace VWParty.Infra.Messaging
 {
     public class WebQueue : IDisposable
     {
@@ -26,10 +26,8 @@ namespace Zeus.Messaging
 
         public WebQueue(string queueName)
         {
-            var factory = new ConnectionFactory() {
-                HostName = QueueConfig.QueueHostName,
-                Port = QueueConfig.QueuePortNumber
-            };
+            var factory = QueueConfig.DefaultConnectionFactory;
+
             connection = factory.CreateConnection();
             channel = connection.CreateModel();
             replyQueueName = channel.QueueDeclare().QueueName;

@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Zeus.Messaging
+namespace VWParty.Infra.Messaging
 {
     [Serializable]
     public class RequestMessage

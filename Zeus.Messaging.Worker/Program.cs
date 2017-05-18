@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using VWParty.Infra.Messaging;
 
 namespace Zeus.Messaging.Worker
 {
@@ -22,7 +23,7 @@ namespace Zeus.Messaging.Worker
                 WorkerQueue.WorkerProcess proc = (request) =>
                 {
                     Interlocked.Increment(ref count);
-                    Console.Write("-");
+                    Console.Write(" (thread: {0}) ", Thread.CurrentThread.ManagedThreadId);
                     return new ResponseMessage()
                     {
                         result_json = request.input_json
@@ -44,11 +45,11 @@ namespace Zeus.Messaging.Worker
 
                         Task.Delay(period).Wait();
                         Console.WriteLine();
-                    //Console.WriteLine($"處理速度: {count / period.TotalSeconds} requests/sec");
-                }
+                        Console.WriteLine($"處理速度: {count / period.TotalSeconds} requests/sec");
+                    }
                 });
 
-                wq.StartWorkers(proc, 1);
+                wq.StartWorkers(proc, 10);
 
                 Console.WriteLine("Press [ENTER] to quit...");
                 Console.ReadLine();

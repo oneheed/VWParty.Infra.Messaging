@@ -9,7 +9,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Zeus.Messaging
+namespace VWParty.Infra.Messaging
 {
     public class WorkerQueue : IDisposable
     {
@@ -21,15 +21,15 @@ namespace Zeus.Messaging
 
         public WorkerQueue(string queueName)
         {
-            ConnectionFactory factory = new ConnectionFactory()
-            {
-                //HostName = "10.101.6.173",
-                //Port = 5672
-                HostName = QueueConfig.QueueHostName,
-                Port = QueueConfig.QueuePortNumber
-            };
+            //ConnectionFactory factory = new ConnectionFactory()
+            //{
+            //    //HostName = "10.101.6.173",
+            //    //Port = 5672
+            //    HostName = QueueConfig.QueueHostName,
+            //    Port = QueueConfig.QueuePortNumber
+            //};
 
-            connection = factory.CreateConnection();
+            connection = QueueConfig.DefaultConnectionFactory.CreateConnection();
 
             this._rpcQueueName = queueName;
         }
