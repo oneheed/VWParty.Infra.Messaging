@@ -1,10 +1,8 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2013
-VisualStudioVersion = 12.0.40629.0
+# Visual Studio 14
+VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Messaging", "Messaging\Messaging.csproj", "{1BA14460-C846-4F6E-946A-036DC2AC8AD8}"
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{30CC41ED-9E61-4848-9431-C0448BABCC64}"
 	ProjectSection(SolutionItems) = preProject
 		.nuget\NuGet.Config = .nuget\NuGet.Config
@@ -12,18 +10,51 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{30CC41
 		.nuget\NuGet.targets = .nuget\NuGet.targets
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RabbitMQ.POC", "RabbitMQ.POC\RabbitMQ.POC.csproj", "{04CC63ED-C364-48DC-ABE4-8CBC246673E6}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{AAE88513-0FF9-4918-BC6C-C60BA1B5BC3D}"
+	ProjectSection(SolutionItems) = preProject
+		.gitlab-ci.yml = .gitlab-ci.yml
+		README.md = README.md
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VWParty.Infra.Messaging", "VWParty.Infra.Messaging\VWParty.Infra.Messaging.csproj", "{0ADB7A47-5D53-4917-B53A-C0041CF67D7F}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "POC", "POC", "{87EA894B-CCFD-42C6-B30C-A4E8CF2D5FBC}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Zeus.Messaging.Client", "Zeus.Messaging.Client\Zeus.Messaging.Client.csproj", "{6104B873-BCB9-4E87-B190-2CF329EF44C2}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Zeus.Messaging.Worker", "Zeus.Messaging.Worker\Zeus.Messaging.Worker.csproj", "{836072DB-1D43-4952-B97D-42258B071FF4}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{1BA14460-C846-4F6E-946A-036DC2AC8AD8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{1BA14460-C846-4F6E-946A-036DC2AC8AD8}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{1BA14460-C846-4F6E-946A-036DC2AC8AD8}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{1BA14460-C846-4F6E-946A-036DC2AC8AD8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{04CC63ED-C364-48DC-ABE4-8CBC246673E6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{04CC63ED-C364-48DC-ABE4-8CBC246673E6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{04CC63ED-C364-48DC-ABE4-8CBC246673E6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{04CC63ED-C364-48DC-ABE4-8CBC246673E6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0ADB7A47-5D53-4917-B53A-C0041CF67D7F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0ADB7A47-5D53-4917-B53A-C0041CF67D7F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0ADB7A47-5D53-4917-B53A-C0041CF67D7F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0ADB7A47-5D53-4917-B53A-C0041CF67D7F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6104B873-BCB9-4E87-B190-2CF329EF44C2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6104B873-BCB9-4E87-B190-2CF329EF44C2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6104B873-BCB9-4E87-B190-2CF329EF44C2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6104B873-BCB9-4E87-B190-2CF329EF44C2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{836072DB-1D43-4952-B97D-42258B071FF4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{836072DB-1D43-4952-B97D-42258B071FF4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{836072DB-1D43-4952-B97D-42258B071FF4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{836072DB-1D43-4952-B97D-42258B071FF4}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{04CC63ED-C364-48DC-ABE4-8CBC246673E6} = {87EA894B-CCFD-42C6-B30C-A4E8CF2D5FBC}
+		{6104B873-BCB9-4E87-B190-2CF329EF44C2} = {87EA894B-CCFD-42C6-B30C-A4E8CF2D5FBC}
+		{836072DB-1D43-4952-B97D-42258B071FF4} = {87EA894B-CCFD-42C6-B30C-A4E8CF2D5FBC}
 	EndGlobalSection
 EndGlobal
