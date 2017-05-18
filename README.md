@@ -1,10 +1,12 @@
+[![build status](https://gitlab.66.net/msa/VWParty.Infra.Messaging/badges/develop/build.svg)](https://gitlab.66.net/msa/VWParty.Infra.Messaging/commits/develop) (branch: develop)
+
 # RabbitMQ Toturials
 
 
 
-# TPV2 §ïª©¥Ø¼Ð
+# TPV2 æ”¹ç‰ˆç›®æ¨™
 
-* ¸Ñ°£ zeus / tp-v ¤§¶¡ªº API call, ¤£¥²­nªº½ÆÂø«×¡C§ï¦¨ client ª½±µ­±¹ï TPV2, »P Game server ·¾³q¡C TPV2 »P zeus À³¸Ó³z¹L¼Ð·Çªº token ¤¬³q·|­ûµ¥¸ê°T§Y¥i¡A­I«áª½±µ­±¹ï¦@¦Pªº membership service, banking service, billing service
+* è§£é™¤ zeus / tp-v ä¹‹é–“çš„ API call, ä¸å¿…è¦çš„è¤‡é›œåº¦ã€‚æ”¹æˆ client ç›´æŽ¥é¢å° TPV2, èˆ‡ Game server æºé€šã€‚ TPV2 èˆ‡ zeus æ‡‰è©²é€éŽæ¨™æº–çš„ token äº’é€šæœƒå“¡ç­‰è³‡è¨Šå³å¯ï¼ŒèƒŒå¾Œç›´æŽ¥é¢å°å…±åŒçš„ membership service, banking service, billing service
 * 
 
 
@@ -12,7 +14,7 @@
 # Message Ackowledgment
 * Toturial in C#: [Work Queues](https://www.rabbitmq.com/tutorials/tutorial-two-dotnet.html)
 
-worker ªº³B²z¼Ò¦¡±Ð¾Ç¡C³o¬q»¡©ú message ¤À¬£µ¹ worker «á¡Aworker ³B²z§¹²¦«á¥²¶·¦^³ø¦¨¥\¡C­Y¨S±µ¨ì¦^³ø«h¥Nªí¥¢±Ñ¡Abroker ·|¹Á¸Õ§â³o­Ó message ­«·s¤À°t¡C
+worker çš„è™•ç†æ¨¡å¼æ•™å­¸ã€‚é€™æ®µèªªæ˜Ž message åˆ†æ´¾çµ¦ worker å¾Œï¼Œworker è™•ç†å®Œç•¢å¾Œå¿…é ˆå›žå ±æˆåŠŸã€‚è‹¥æ²’æŽ¥åˆ°å›žå ±å‰‡ä»£è¡¨å¤±æ•—ï¼Œbroker æœƒå˜—è©¦æŠŠé€™å€‹ message é‡æ–°åˆ†é…ã€‚
 
 
 > In order to make sure a message is never lost, RabbitMQ supports message acknowledgments. An ack(nowledgement) is sent back from the consumer to tell RabbitMQ that a particular message has been received, processed and that RabbitMQ is free to delete it.
