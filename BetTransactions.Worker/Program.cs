@@ -22,7 +22,7 @@ namespace BetTransactions.Worker
                     Console.WriteLine("[{0}] {1} ...", Thread.CurrentThread.ManagedThreadId, bm.Id);
                     return null;
                 },
-                50);
+                10);
 
             Console.WriteLine("PRESS [ENTER] To Exit...");
             Console.ReadLine();

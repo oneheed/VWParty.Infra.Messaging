@@ -17,7 +17,7 @@ namespace BetTransactions.Client
             {
                 bus.PublishMessage("letou", new BetTransactionMessage()
                 {
-                    Id = Guid.NewGuid().ToString()
+                    Id = string.Format("{0}-{1}", i, Guid.NewGuid())
                 });
                 if (i % 100 == 0) Console.WriteLine("Message Published: {0}...", i);
             }

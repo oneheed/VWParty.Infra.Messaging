@@ -45,9 +45,6 @@ namespace VWParty.Infra.Messaging.BetTransactions
             using (var connection = MessageBusConfig.DefaultConnectionFactory.CreateConnection()) //this.connectionFactory.CreateConnection())
             using (var channel = connection.CreateModel())
             {
-                //string exchangeName = "tp-transaction";
-                //string brandId = "letou";
-
                 channel.ExchangeDeclare(
                     exchangeTopic,
                     "direct",
@@ -55,27 +52,11 @@ namespace VWParty.Infra.Messaging.BetTransactions
                     false,
                     null);
 
-                //var replyQueue = channel.QueueDeclare();
-
                 try
                 {
-                    // prepare response queue
-                    //var consumer = new QueueingBasicConsumer(channel);
-                    //channel.BasicConsume(replyQueue.QueueName, true, consumer);
-
-
-
-                    //var message = "-------------------------------------";
                     var corrId = Guid.NewGuid().ToString("N");
-
                     IBasicProperties props = channel.CreateBasicProperties();
                     props.ContentType = "application/json";
-                    //props.DeliveryMode = 2;
-                    //props.Expiration = "10000"; // per message expiration
-
-                    // setup return mechanism
-                    //props.ReplyTo = replyQueue.QueueName;
-                    //props.CorrelationId = corrId;
 
                     channel.BasicPublish(
                         exchange: exchangeTopic,
@@ -83,22 +64,7 @@ namespace VWParty.Infra.Messaging.BetTransactions
                         basicProperties: props,
                         body: Encoding.Unicode.GetBytes(JsonConvert.SerializeObject(message)));
 
-                    //Console.WriteLine();
-                    //Console.WriteLine("Sent: {0}", message);
                     return;
-
-                    //BasicDeliverEventArgs ea;
-                    //if (consumer.Queue.Dequeue(15000, out ea) == true)
-                    //{
-                    //    // assure ea.BasicProperties.CorrelationId == corrId;
-                    //    // return;
-                    //}
-                    //else
-                    //{
-                    //    //Console.WriteLine("* RPC timeout.");
-                    //    //break;
-                    //    throw new TimeoutException();
-                    //}
                 }
                 finally
                 {
@@ -121,35 +87,22 @@ namespace VWParty.Infra.Messaging.BetTransactions
             using (var connection = MessageBusConfig.DefaultConnectionFactory.CreateConnection()) //this.connectionFactory.CreateConnection())
             using (var channel = connection.CreateModel())
             {
-                //channel.ExchangeDeclare(exchangeTopic, "fanout", true);
                 channel.QueueDeclare(queue, true, false, false);
-
-                //var queueName = channel.QueueDeclare().QueueName;
-                //channel.QueueBind(
-                //    queue: queue,
-                //    exchange: topic,
-                //    routingKey: "");
-
                 var consumer = new EventingBasicConsumer(channel);
                 channel.BasicConsume(
                     queue: queue,
                     noAck: false,   // you must MANUAL send ack back when you complete message process.
                     consumer: consumer);
 
+                bool running = false;
                 EventHandler<BasicDeliverEventArgs> worker = (model, ea) =>
                 {
-
-
                     try
                     {
+                        running = true;
                         wait.Reset();
-
-
                         if (this._stop == true) return;
 
-
-
-                        //Interlocked.Increment(ref concurrent);
                         var body = ea.Body;
                         var message = Encoding.Unicode.GetString(body);
 
@@ -166,9 +119,7 @@ namespace VWParty.Infra.Messaging.BetTransactions
                             return;
                         }
 
-
                         object respMsg = processor(btm);
-
 
                         if (response)
                         {
@@ -179,43 +130,25 @@ namespace VWParty.Infra.Messaging.BetTransactions
                                 ea.BasicProperties,
                                 Encoding.Unicode.GetBytes(JsonConvert.SerializeObject(respMsg)));
                         }
-
+                        //Task.Delay(1000).Wait();
                         channel.BasicAck(ea.DeliveryTag, false);
-                        Console.WriteLine("");
-                        //Interlocked.Decrement(ref concurrent);
                     }
                     finally
                     {
-                        wait.Set();
+                        if (this._stop == true) wait.Set();
+                        running = false;
                     }
-
                 };
 
                 consumer.Received += worker;
-
-
-                //var consumer = new QueueingBasicConsumer(channel);
-                //while(true)
-                //{
-                //    var ea = consumer.Queue.Dequeue();
-                //    var body = ea.Body;
-                //    var message = Encoding.Unicode.GetString(body);
-                //    Console.WriteLine(" [x] {0}", message);
-                //}
-
-
-
-
-
-
-                //Console.WriteLine("Press [ENTER] to quit.. ({0})", Thread.CurrentThread.ManagedThreadId);
-                //Console.ReadLine();
-
-                wait.WaitOne();
+                //while(wait.WaitOne(100)==false && this._stop==false && running == false);
+                while(true)
+                {
+                    if (wait.WaitOne(100) == true) break;
+                    if (running) continue;
+                    if (this._stop == true) break;
+                }
                 consumer.Received -= worker;
-                //Console.WriteLine("done");
-                //SpinWait.SpinUntil(() => { return concurrent == 0; });
-                //Console.WriteLine(concurrent);
             }
         }
 

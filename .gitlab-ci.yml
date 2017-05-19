@@ -2,7 +2,7 @@ stages:
 - build
 
 variables:
-  BUILD_VERSION: "0.3.0"
+  BUILD_VERSION: "0.3.1"
   NUGET_APIKEY: "0F2DB634-4E83-4659-8068-EF552DDC4072"
   NUGET_SERVER: "http://172.20.5.15/nugetServer/"
 
