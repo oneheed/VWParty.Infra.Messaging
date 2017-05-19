@@ -45,7 +45,7 @@ namespace Zeus.Messaging.Worker
 
                         Task.Delay(period).Wait();
                         Console.WriteLine();
-                        Console.WriteLine(String.Format("處理速度: {0} requests/sec", count / period.TotalSeconds));
+                        Console.WriteLine($"處理速度: {count / period.TotalSeconds} requests/sec");
                     }
                 });
 
