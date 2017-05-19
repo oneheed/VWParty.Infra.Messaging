@@ -91,7 +91,7 @@ namespace RabbitMQ.POC
                             "", 
                             ea.BasicProperties.ReplyTo, 
                             ea.BasicProperties, 
-                            Encoding.UTF8.GetBytes($"DONE: {queue}"));
+                            Encoding.UTF8.GetBytes(String.Format("DONE: {0}", queue)));
                     }
 
                     channel.BasicAck(ea.DeliveryTag, false);
