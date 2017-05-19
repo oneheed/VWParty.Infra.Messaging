@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace VWParty.Infra.Messaging
 {
-    internal class QueueConfig
+    internal class MessageBusConfig
     {
         private static string DefaultName = "MessageBus";
 
@@ -41,6 +41,7 @@ namespace VWParty.Infra.Messaging
 
             string connstr = configItem.ConnectionString;
             ConnectionFactory fac = new ConnectionFactory();
+            fac.Port = 5672; // set default port
 
             foreach (string segment in connstr.Split(';'))
             {

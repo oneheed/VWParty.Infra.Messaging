@@ -26,6 +26,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Zeus.Messaging.Client", "Ze
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Zeus.Messaging.Worker", "Zeus.Messaging.Worker\Zeus.Messaging.Worker.csproj", "{836072DB-1D43-4952-B97D-42258B071FF4}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BetTransactions.Client", "BetTransactions.Client\BetTransactions.Client.csproj", "{88E0724A-5A2E-4E3A-BB04-62E09035DAE1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BetTransactions.Worker", "BetTransactions.Worker\BetTransactions.Worker.csproj", "{E736051E-7F26-4247-AEBC-0CA49811FA2B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -48,6 +52,14 @@ Global
 		{836072DB-1D43-4952-B97D-42258B071FF4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{836072DB-1D43-4952-B97D-42258B071FF4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{836072DB-1D43-4952-B97D-42258B071FF4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{88E0724A-5A2E-4E3A-BB04-62E09035DAE1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{88E0724A-5A2E-4E3A-BB04-62E09035DAE1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{88E0724A-5A2E-4E3A-BB04-62E09035DAE1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{88E0724A-5A2E-4E3A-BB04-62E09035DAE1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E736051E-7F26-4247-AEBC-0CA49811FA2B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E736051E-7F26-4247-AEBC-0CA49811FA2B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E736051E-7F26-4247-AEBC-0CA49811FA2B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E736051E-7F26-4247-AEBC-0CA49811FA2B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -56,5 +68,7 @@ Global
 		{04CC63ED-C364-48DC-ABE4-8CBC246673E6} = {87EA894B-CCFD-42C6-B30C-A4E8CF2D5FBC}
 		{6104B873-BCB9-4E87-B190-2CF329EF44C2} = {87EA894B-CCFD-42C6-B30C-A4E8CF2D5FBC}
 		{836072DB-1D43-4952-B97D-42258B071FF4} = {87EA894B-CCFD-42C6-B30C-A4E8CF2D5FBC}
+		{88E0724A-5A2E-4E3A-BB04-62E09035DAE1} = {87EA894B-CCFD-42C6-B30C-A4E8CF2D5FBC}
+		{E736051E-7F26-4247-AEBC-0CA49811FA2B} = {87EA894B-CCFD-42C6-B30C-A4E8CF2D5FBC}
 	EndGlobalSection
 EndGlobal

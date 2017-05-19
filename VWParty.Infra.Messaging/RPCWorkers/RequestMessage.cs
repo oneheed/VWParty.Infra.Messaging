@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace VWParty.Infra.Messaging
+namespace VWParty.Infra.Messaging.RPCWorkers
 {
     [Serializable]
     public class RequestMessage

@@ -16,11 +16,23 @@ namespace VWParty.Infra.Messaging.BetTransactions
         //private ConnectionFactory connectionFactory = null;
         //private IConnection connection = null;
 
-        const string exchangeTopic = "tp-transaction";
+        protected string exchangeTopic { get; private set; }
+        //{
+        //    get
+        //    {
+        //        return "tp-transaction";
+        //    }
+        //}
         
         public BetMessageBus() //: this("10.101.6.173", 5672)
+            : this("tp-transaction")
         {
 
+        }
+
+        public BetMessageBus(string exchangeName)
+        {
+            this.exchangeTopic = exchangeName;
         }
 
 
@@ -30,7 +42,7 @@ namespace VWParty.Infra.Messaging.BetTransactions
 
         public void PublishMessage(string brandId, BetTransactionMessage message)
         {
-            using (var connection = QueueConfig.DefaultConnectionFactory.CreateConnection()) //this.connectionFactory.CreateConnection())
+            using (var connection = MessageBusConfig.DefaultConnectionFactory.CreateConnection()) //this.connectionFactory.CreateConnection())
             using (var channel = connection.CreateModel())
             {
                 //string exchangeName = "tp-transaction";
@@ -98,39 +110,35 @@ namespace VWParty.Infra.Messaging.BetTransactions
 
         public delegate object process_subscribed_message(BetTransactionMessage betmsg);
 
-        public void SubscribeMessage(string queue, bool response, process_subscribed_message processor)
+        private void SubscribeMessage(string queue, bool response, process_subscribed_message processor)
         {
             if (processor == null) throw new ArgumentNullException();
             if (string.IsNullOrEmpty(queue)) throw new ArgumentNullException();
 
-            //int concurrent = 0;
-            ManualResetEvent wait = new ManualResetEvent(false);
+            //ManualResetEvent wait = new ManualResetEvent(false);
 
-            using (var connection = QueueConfig.DefaultConnectionFactory.CreateConnection()) //this.connectionFactory.CreateConnection())
+            using (var connection = MessageBusConfig.DefaultConnectionFactory.CreateConnection()) //this.connectionFactory.CreateConnection())
             using (var channel = connection.CreateModel())
             {
                 //channel.ExchangeDeclare(exchangeTopic, "fanout", true);
                 channel.QueueDeclare(queue, true, false, false);
 
-                //var queueName = channel.QueueDeclare().QueueName;
-                //channel.QueueBind(
-                //    queue: queue,
-                //    exchange: topic,
-                //    routingKey: "");
+                //var consumer = new EventingBasicConsumer(channel);
+                var consumer = new QueueingBasicConsumer(channel);
 
-                var consumer = new EventingBasicConsumer(channel);
                 channel.BasicConsume(
                     queue: queue,
                     noAck: false,   // you must MANUAL send ack back when you complete message process.
                     consumer: consumer);
 
-                EventHandler<BasicDeliverEventArgs> worker = (model, ea) =>
+
+                while(this._stop == false)
                 {
-                    wait.Reset();
+                    BasicDeliverEventArgs ea;
+                    if (consumer.Queue.Dequeue(100, out ea) == false) continue;
 
                     try
                     {
-                        //Interlocked.Increment(ref concurrent);
                         var body = ea.Body;
                         var message = Encoding.Unicode.GetString(body);
 
@@ -162,42 +170,45 @@ namespace VWParty.Infra.Messaging.BetTransactions
                         }
 
                         channel.BasicAck(ea.DeliveryTag, false);
-                        Console.WriteLine("");
+                        //Console.WriteLine("");
                         //Interlocked.Decrement(ref concurrent);
                     }
                     finally
                     {
-                        wait.Set();
                     }
-
                 };
-                consumer.Received += worker;
 
-
-                //var consumer = new QueueingBasicConsumer(channel);
-                //while(true)
-                //{
-                //    var ea = consumer.Queue.Dequeue();
-                //    var body = ea.Body;
-                //    var message = Encoding.Unicode.GetString(body);
-                //    Console.WriteLine(" [x] {0}", message);
-                //}
-
-
-
-
-
-
-                Console.WriteLine("Press [ENTER] to quit.. ({0})", Thread.CurrentThread.ManagedThreadId);
-                Console.ReadLine();
-
-                wait.WaitOne();
-                consumer.Received -= worker;
-                //Console.WriteLine("done");
-                //SpinWait.SpinUntil(() => { return concurrent == 0; });
-                //Console.WriteLine(concurrent);
             }
         }
 
+
+
+        private Task[] running_worker_tasks = null;
+        private bool _stop = true;
+
+
+        public void Stop()
+        {
+            this._stop = true;
+            //this._wait.WaitOne();
+            Task.WaitAll(this.running_worker_tasks);
+        }
+
+        public void StartSubscribeWorker(string queue, bool response, process_subscribed_message processor, int worker_count)
+        {
+            this._stop = false;
+
+            Task[] tasks = new Task[worker_count];
+
+            for (int index = 0; index < worker_count; index++)
+            {
+                tasks[index] = Task.Run(() => {
+                    this.SubscribeMessage(queue, response, processor);
+                });
+            }
+
+            this.running_worker_tasks = tasks;
+
+        }
     }
 }
