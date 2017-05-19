@@ -7,7 +7,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace VWParty.Infra.Messaging
+namespace VWParty.Infra.Messaging.RPCWorkers
 {
     public class WebQueue : IDisposable
     {
@@ -26,7 +26,7 @@ namespace VWParty.Infra.Messaging
 
         public WebQueue(string queueName)
         {
-            var factory = QueueConfig.DefaultConnectionFactory;
+            var factory = MessageBusConfig.DefaultConnectionFactory;
 
             connection = factory.CreateConnection();
             channel = connection.CreateModel();

@@ -16,11 +16,23 @@ namespace VWParty.Infra.Messaging.BetTransactions
         //private ConnectionFactory connectionFactory = null;
         //private IConnection connection = null;
 
-        const string exchangeTopic = "tp-transaction";
+        protected string exchangeTopic { get; private set; }
+        //{
+        //    get
+        //    {
+        //        return "tp-transaction";
+        //    }
+        //}
         
         public BetMessageBus() //: this("10.101.6.173", 5672)
+            : this("tp-transaction")
         {
 
+        }
+
+        public BetMessageBus(string exchangeName)
+        {
+            this.exchangeTopic = exchangeName;
         }
 
 
@@ -30,7 +42,7 @@ namespace VWParty.Infra.Messaging.BetTransactions
 
         public void PublishMessage(string brandId, BetTransactionMessage message)
         {
-            using (var connection = QueueConfig.DefaultConnectionFactory.CreateConnection()) //this.connectionFactory.CreateConnection())
+            using (var connection = MessageBusConfig.DefaultConnectionFactory.CreateConnection()) //this.connectionFactory.CreateConnection())
             using (var channel = connection.CreateModel())
             {
                 //string exchangeName = "tp-transaction";
@@ -98,7 +110,7 @@ namespace VWParty.Infra.Messaging.BetTransactions
 
         public delegate object process_subscribed_message(BetTransactionMessage betmsg);
 
-        public void SubscribeMessage(string queue, bool response, process_subscribed_message processor)
+        private void SubscribeMessage(string queue, bool response, process_subscribed_message processor)
         {
             if (processor == null) throw new ArgumentNullException();
             if (string.IsNullOrEmpty(queue)) throw new ArgumentNullException();
@@ -106,7 +118,7 @@ namespace VWParty.Infra.Messaging.BetTransactions
             //int concurrent = 0;
             ManualResetEvent wait = new ManualResetEvent(false);
 
-            using (var connection = QueueConfig.DefaultConnectionFactory.CreateConnection()) //this.connectionFactory.CreateConnection())
+            using (var connection = MessageBusConfig.DefaultConnectionFactory.CreateConnection()) //this.connectionFactory.CreateConnection())
             using (var channel = connection.CreateModel())
             {
                 //channel.ExchangeDeclare(exchangeTopic, "fanout", true);
@@ -126,10 +138,17 @@ namespace VWParty.Infra.Messaging.BetTransactions
 
                 EventHandler<BasicDeliverEventArgs> worker = (model, ea) =>
                 {
-                    wait.Reset();
+
 
                     try
                     {
+                        wait.Reset();
+
+
+                        if (this._stop == true) return;
+
+
+
                         //Interlocked.Increment(ref concurrent);
                         var body = ea.Body;
                         var message = Encoding.Unicode.GetString(body);
@@ -171,6 +190,7 @@ namespace VWParty.Infra.Messaging.BetTransactions
                     }
 
                 };
+
                 consumer.Received += worker;
 
 
@@ -188,8 +208,8 @@ namespace VWParty.Infra.Messaging.BetTransactions
 
 
 
-                Console.WriteLine("Press [ENTER] to quit.. ({0})", Thread.CurrentThread.ManagedThreadId);
-                Console.ReadLine();
+                //Console.WriteLine("Press [ENTER] to quit.. ({0})", Thread.CurrentThread.ManagedThreadId);
+                //Console.ReadLine();
 
                 wait.WaitOne();
                 consumer.Received -= worker;
@@ -199,5 +219,34 @@ namespace VWParty.Infra.Messaging.BetTransactions
             }
         }
 
+
+
+        private Task[] running_worker_tasks = null;
+        private bool _stop = true;
+
+
+        public void Stop()
+        {
+            this._stop = true;
+            //this._wait.WaitOne();
+            Task.WaitAll(this.running_worker_tasks);
+        }
+
+        public void StartSubscribeWorker(string queue, bool response, process_subscribed_message processor, int worker_count)
+        {
+            this._stop = false;
+
+            Task[] tasks = new Task[worker_count];
+
+            for (int index = 0; index < worker_count; index++)
+            {
+                tasks[index] = Task.Run(() => {
+                    this.SubscribeMessage(queue, response, processor);
+                });
+            }
+
+            this.running_worker_tasks = tasks;
+
+        }
     }
 }

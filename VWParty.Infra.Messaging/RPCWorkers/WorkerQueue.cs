@@ -9,7 +9,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace VWParty.Infra.Messaging
+namespace VWParty.Infra.Messaging.RPCWorkers
 {
     public class WorkerQueue : IDisposable
     {
@@ -29,7 +29,7 @@ namespace VWParty.Infra.Messaging
             //    Port = QueueConfig.QueuePortNumber
             //};
 
-            connection = QueueConfig.DefaultConnectionFactory.CreateConnection();
+            connection = MessageBusConfig.DefaultConnectionFactory.CreateConnection();
 
             this._rpcQueueName = queueName;
         }
