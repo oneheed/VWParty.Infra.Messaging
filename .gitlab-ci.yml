@@ -12,21 +12,24 @@ before_script:
 develop_build_job:
   stage: build
   only:
+  - master
   - develop
   script:
+  - if %CI_BUILD_REF_NAME% == master  set BUILD_TARGET=
+  - if %CI_BUILD_REF_NAME% == develop set BUILD_TARGET=-BETA
   - c:\Multi-Runner\nuget.exe restore
   - '"c:\Program Files (x86)\MSBuild\14.0\Bin\amd64\MSBuild.exe" /p:Configuration=Release /p:Platform="Any CPU" /p:VersionAssembly=%BUILD_VERSION% VWParty.Infra.Messaging.sln'
-  - c:\Multi-Runner\nuget.exe pack VWParty.Infra.Messaging\VWParty.Infra.Messaging.csproj -Properties Configuration=Release -Version %BUILD_VERSION%-beta
-  - c:\Multi-Runner\nuget.exe push VWParty.Infra.Messaging.%BUILD_VERSION%-beta.nupkg -ApiKey %NUGET_APIKEY% -Source %NUGET_SERVER%
+  - c:\Multi-Runner\nuget.exe pack VWParty.Infra.Messaging\VWParty.Infra.Messaging.csproj -Properties Configuration=Release -Version %BUILD_VERSION%%BUILD_TARGET%
+  - c:\Multi-Runner\nuget.exe push VWParty.Infra.Messaging.%BUILD_VERSION%%BUILD_TARGET%.nupkg -ApiKey %NUGET_APIKEY% -Source %NUGET_SERVER%
 
 
-# script ≥£∏Ú develop_build_job ¨€¶P°C•u¶≥Ω’æ„ BUILD_VERSION ªPπÔ¿≥™∫ branch
-master_build_job:
-  stage: build
-  only:
-  - master
-  script:
-  - c:\Multi-Runner\nuget.exe restore
-  - '"c:\Program Files (x86)\MSBuild\14.0\Bin\amd64\MSBuild.exe" /p:Configuration=Release /p:Platform="Any CPU" /p:VersionAssembly=%BUILD_VERSION% VWParty.Infra.Messaging.sln'
-  - c:\Multi-Runner\nuget.exe pack VWParty.Infra.Messaging\VWParty.Infra.Messaging.csproj -Properties Configuration=Release -Version %BUILD_VERSION%
-  - c:\Multi-Runner\nuget.exe push VWParty.Infra.Messaging.%BUILD_VERSION%.nupkg -ApiKey %NUGET_APIKEY% -Source %NUGET_SERVER%
+# script ÈÉΩË∑ü develop_build_job Áõ∏Âêå„ÄÇÂè™ÊúâË™øÊï¥ BUILD_VERSION ËàáÂ∞çÊáâÁöÑ branch
+#master_build_job:
+#  stage: build
+#  only:
+#  - master
+#  script:
+#  - c:\Multi-Runner\nuget.exe restore
+#  - '"c:\Program Files (x86)\MSBuild\14.0\Bin\amd64\MSBuild.exe" /p:Configuration=Release /p:Platform="Any CPU" /p:VersionAssembly=%BUILD_VERSION% VWParty.Infra.Messaging.sln'
+#  - c:\Multi-Runner\nuget.exe pack VWParty.Infra.Messaging\VWParty.Infra.Messaging.csproj -Properties Configuration=Release -Version %BUILD_VERSION%
+#  - c:\Multi-Runner\nuget.exe push VWParty.Infra.Messaging.%BUILD_VERSION%.nupkg -ApiKey %NUGET_APIKEY% -Source %NUGET_SERVER%
