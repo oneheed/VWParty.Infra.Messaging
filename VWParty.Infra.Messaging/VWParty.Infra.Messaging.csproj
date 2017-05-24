@@ -56,7 +56,6 @@
     <Compile Include="BetTransactions\BetMessageBus.cs" />
     <Compile Include="BetTransactions\BetTransactionMessage.cs" />
     <Compile Include="BetTransactions\BetTransactionTypeEnum.cs" />
-    <Compile Include="MessageBusBase.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="MessageBusConfig.cs" />
     <Compile Include="RPCWorkers\RequestMessage.cs" />
@@ -67,7 +66,9 @@
   <ItemGroup>
     <None Include="packages.config" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Folder Include="CashFlowTransactions\" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

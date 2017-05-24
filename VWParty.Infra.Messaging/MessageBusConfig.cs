@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace VWParty.Infra.Messaging
 {
-    internal class MessageBusConfig
+    public class MessageBusConfig
     {
         private static string DefaultName = "MessageBus";
 
