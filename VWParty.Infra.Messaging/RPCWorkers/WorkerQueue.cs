@@ -4,7 +4,7 @@ using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using System;
 using System.Collections.Generic;
-
+using System.Diagnostics;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -13,6 +13,19 @@ namespace VWParty.Infra.Messaging.RPCWorkers
 {
     public class WorkerQueue : IDisposable
     {
+        private static Logger _logger = LogManager.GetCurrentClassLogger();
+        public string CurrentZeusRequestId
+        {
+            get
+            {
+                //Thread.SetData(Thread.GetNamedDataSlot("ZeusRequestID"), "123123123123");
+                return Thread.GetData(Thread.GetNamedDataSlot("ZeusRequestID")) as string;
+            }
+            private set
+            {
+                Thread.SetData(Thread.GetNamedDataSlot("ZeusRequestId"), value);
+            }
+        }
         public delegate ResponseMessage WorkerProcess(RequestMessage request);
 
         private IConnection connection;
@@ -40,6 +53,10 @@ namespace VWParty.Infra.Messaging.RPCWorkers
         {
             this._stop = false;
 
+            Stopwatch totalWatch = new Stopwatch();
+            totalWatch.Start();
+            _logger.Info("WorkerThread({0}) - start running...", Thread.CurrentThread.ManagedThreadId);
+
             using (var channel = connection.CreateModel())
             {
  
@@ -66,7 +83,7 @@ namespace VWParty.Infra.Messaging.RPCWorkers
                     BasicDeliverEventArgs ea;
                     if (consumer.Queue.Dequeue(100, out ea) == false) continue;
 
-
+                    _logger.Info("WorkerThread({0}) - receive message: {1}", Thread.CurrentThread.ManagedThreadId, ea.BasicProperties.MessageId);
 
                     ResponseMessage response = null;
 
@@ -79,9 +96,10 @@ namespace VWParty.Infra.Messaging.RPCWorkers
                     {
                         RequestMessage request = JsonConvert.DeserializeObject<RequestMessage>(Encoding.Unicode.GetString(body));
 
-                        Console.Write("received message({0})...", request.input_json);
+                        _logger.Info("WorkerThread({0}) - before processing message: {1}", Thread.CurrentThread.ManagedThreadId, props.MessageId);
+                        this.CurrentZeusRequestId = request.request_id;
                         response = process(request);
-                        Console.WriteLine("OK");
+                        _logger.Info("WorkerThread({0}) - message was processed: {1}", Thread.CurrentThread.ManagedThreadId, props.MessageId);
                     }
                     catch (Exception e)
                     {
@@ -89,6 +107,7 @@ namespace VWParty.Infra.Messaging.RPCWorkers
                         {
                             exception = e.ToString()
                         };
+                        _logger.Warn(e, "WorkerThread({0}) - process message with exception: {1}, ex: {2}", Thread.CurrentThread.ManagedThreadId, props.MessageId, e);
                     }
                     finally
                     {
@@ -106,6 +125,9 @@ namespace VWParty.Infra.Messaging.RPCWorkers
                 }
                 
             }
+
+            totalWatch.Stop();
+            _logger.Info("WorkerThread({0}) - stopped (elapsed seconds: {1})", Thread.CurrentThread.ManagedThreadId, totalWatch.Elapsed.TotalSeconds.ToString("0.000"));
         }
 
 
