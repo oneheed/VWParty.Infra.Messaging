@@ -12,24 +12,22 @@ namespace BetTransactions.Worker
     {
         static void Main(string[] args)
         {
-            BetMessageBus bus = new BetMessageBus();
-
-            bus.StartSubscribeWorker(
-                "bet_test",
-                false,
-                (bm) =>
+            //BetMessageBus bus = new BetMessageBus();
+            using (BetMessageSubscriber bus = new BetMessageSubscriber("bet_test"))
+            {
+                bus.StartWorkers((bm) =>
                 {
                     Console.WriteLine("[{0}] {1} ...", Thread.CurrentThread.ManagedThreadId, bm.Id);
                     return null;
-                },
-                10);
+                }, 10);
 
-            Console.WriteLine("PRESS [ENTER] To Exit...");
-            Console.ReadLine();
+                Console.WriteLine("PRESS [ENTER] To Exit...");
+                Console.ReadLine();
 
-            Console.WriteLine("Shutdown worker...");
-            bus.Stop();
-            Console.WriteLine("Shutdown complete.");
+                Console.WriteLine("Shutdown worker...");
+                bus.Stop();
+                Console.WriteLine("Shutdown complete.");
+            }
         }
     }
 }

@@ -11,7 +11,8 @@ namespace BetTransactions.Client
     {
         static void Main(string[] args)
         {
-            BetMessageBus bus = new BetMessageBus();
+            //BetMessageBus bus = new BetMessageBus();
+            BetMessagePublisher bus = new BetMessagePublisher();
 
             for (int i = 0; i < 1000000; i++)
             {

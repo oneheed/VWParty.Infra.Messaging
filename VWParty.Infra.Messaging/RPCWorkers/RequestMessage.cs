@@ -3,11 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using VWParty.Infra.Messaging.Core;
 
 namespace VWParty.Infra.Messaging.RPCWorkers
 {
     [Serializable]
-    public class RequestMessage
+    public class RequestMessage : InputMessageBase
     {
         public string request_id { get; set; }
         public string function { get; set; }
