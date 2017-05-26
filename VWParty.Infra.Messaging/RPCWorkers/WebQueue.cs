@@ -6,39 +6,21 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
+using VWParty.Infra.Messaging.Core;
 
 namespace VWParty.Infra.Messaging.RPCWorkers
 {
-    public class WebQueue : IDisposable
+    public class WebQueue : MessagePublisherBase<RequestMessage, ResponseMessage>//, IDisposable
     {
-        private IConnection connection;
-        private IModel channel;
-        private string replyQueueName;
-        private QueueingBasicConsumer consumer;
-
-        private string _rpcQueueName = null;
-
         private static Logger _logger = LogManager.GetCurrentClassLogger();
+        //private string QueueName = null;
 
-
-
-
-
-        public WebQueue(string queueName)
+        public WebQueue(string queueName): 
+            base(queueName)
+            
         {
-            var factory = MessageBusConfig.DefaultConnectionFactory;
-
-            connection = factory.CreateConnection();
-            channel = connection.CreateModel();
-            replyQueueName = channel.QueueDeclare().QueueName;
-            consumer = new QueueingBasicConsumer(channel);
-            channel.BasicConsume(queue: replyQueueName,
-                                 noAck: true,
-                                 consumer: consumer);
-
-            this._rpcQueueName = queueName;
-
-            _logger.Info("create webqueue connection - host: {0}, port: {1}", factory.HostName, factory.Port);
+            //this.QueueName = queueName;
+            //_logger.Info("create webqueue connection - host: {0}, port: {1}", factory.HostName, factory.Port);
         }
 
         //public string Call(string message)
@@ -48,52 +30,21 @@ namespace VWParty.Infra.Messaging.RPCWorkers
         }
         public ResponseMessage CallWorkerProcess(RequestMessage request, TimeSpan messageExpirationTimeout)
         {
-            var corrId = Guid.NewGuid().ToString();
-            var props = channel.CreateBasicProperties();
-            props.ReplyTo = replyQueueName;
-            props.CorrelationId = corrId;
-            props.Expiration = messageExpirationTimeout.TotalMilliseconds.ToString();
-
-            var messageBytes = Encoding.Unicode.GetBytes(JsonConvert.SerializeObject(request));
-            channel.BasicPublish(exchange: "",
-                                 routingKey: this._rpcQueueName,
-                                 basicProperties: props,
-                                 body: messageBytes);
-
-            // TODO: 簡化, add timeout
-            DateTime waitUntil = DateTime.Now.Add(TimeSpan.FromSeconds(15));
-            while (DateTime.Now < waitUntil)
-            {
-                //var ea = (BasicDeliverEventArgs)consumer.Queue.Dequeue();
-                BasicDeliverEventArgs ea;
-                if (consumer.Queue.Dequeue(100, out ea) == false) continue;
-
-                //if (ea.BasicProperties.CorrelationId == corrId)
-                {
-                    ResponseMessage response = JsonConvert.DeserializeObject<ResponseMessage>(Encoding.Unicode.GetString(ea.Body));
-
-                    if (string.IsNullOrEmpty(response.exception) == false)
-                    {
-                        throw new Exception("remote call exception: " + response.exception);
-                    }
-
-                    return response;
-                }
-            }
-
-            // timeout
-            throw new TimeoutException(string.Format(
-                "MessageBus 沒有在訊息指定的時間內 ({0}) 收到 ResponseMessage 回覆。",
-                messageExpirationTimeout));
+            return this.PublishAndWaitResponseMessage(
+                true,
+                TimeSpan.FromSeconds(10),
+                messageExpirationTimeout,
+                //this.QueueName,
+                this.QueueName,
+                request);
         }
 
 
 
-        public void Dispose()
-        {
-            connection.Close();
-            _logger.Info("close webqueue connection.");
-        }
+        //public void Dispose()
+        //{
+        //    _logger.Info("close webqueue connection.");
+        //}
     }
 
 

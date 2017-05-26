@@ -8,9 +8,36 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using VWParty.Infra.Messaging;
+using VWParty.Infra.Messaging.Core;
 
 namespace VWParty.Infra.Messaging.BetTransactions
 {
+    public class BetMessagePublisher : MessagePublisherBase<BetTransactionMessage, OutputMessageBase>
+    {
+        public BetMessagePublisher() : base("tp-transaction", "direct")
+        {
+
+        }
+
+        
+    }
+
+
+    public class BetMessageSubscriber : MessageSubscriberBase<BetTransactionMessage, OutputMessageBase>
+    {
+        public BetMessageSubscriber(string queueName) : base(queueName)
+        {
+
+        }
+
+
+    }
+
+
+
+
+
+    [Obsolete("已廢除，請改用 BetMessagePublisher / BetMessageSubscriber 替代", true)]
     public class BetMessageBus
     {
         //private ConnectionFactory connectionFactory = null;
