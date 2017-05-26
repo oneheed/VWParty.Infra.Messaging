@@ -112,21 +112,27 @@ namespace VWParty.Infra.Messaging.Core
                         _logger.Info("WorkerThread({0}) - before processing message: {1}", Thread.CurrentThread.ManagedThreadId, props.MessageId);
                         //this.CurrentZeusRequestId = request.request_id;
                         response = process(request);
+                        // TODO: 如果 process( ) 出現 exception, 目前的 code 還無法有效處理
+
+
                         _logger.Info("WorkerThread({0}) - message was processed: {1}", Thread.CurrentThread.ManagedThreadId, props.MessageId);
 
                     }
                     catch (Exception e)
                     {
-                        response = default(TOutputMessage);
-                        response.exception = e.ToString();
+                        //response = default(TOutputMessage);
+                        //response.exception = e.ToString();
                         _logger.Warn(e, "WorkerThread({0}) - process message with exception: {1}, ex: {2}", Thread.CurrentThread.ManagedThreadId, props.MessageId, e);
                     }
                     finally
                     {
                         if (current_reply)
                         {
-                            var responseBytes = //Encoding.UTF8.GetBytes(response);
-                                Encoding.Unicode.GetBytes(JsonConvert.SerializeObject(response));
+                            byte[] responseBytes = null;//Encoding.UTF8.GetBytes(response);
+                            if (response != null)
+                            {
+                                responseBytes = Encoding.Unicode.GetBytes(JsonConvert.SerializeObject(response));
+                            }
 
                             channel.BasicPublish(
                                 exchange: "",
