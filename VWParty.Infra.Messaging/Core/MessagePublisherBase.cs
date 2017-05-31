@@ -140,7 +140,7 @@ namespace VWParty.Infra.Messaging.Core
                     {
                         channel.BasicPublish(
                             exchange: "",
-                            routingKey: "",
+                            routingKey: this.QueueName,
                             basicProperties: props,
                             body: Encoding.Unicode.GetBytes(JsonConvert.SerializeObject(message)));
                     }
