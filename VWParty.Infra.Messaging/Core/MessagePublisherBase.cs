@@ -82,7 +82,8 @@ namespace VWParty.Infra.Messaging.Core
                 if (this.BusType == MessageBusTypeEnum.QUEUE)
                 {
                     channel.QueueDeclare(
-                        queue: routing,
+                        //queue: routing,
+                        queue: this.QueueName,
                         durable: true,
                         exclusive: false,
                         autoDelete: false,
@@ -127,11 +128,22 @@ namespace VWParty.Infra.Messaging.Core
                         props.ReplyTo = replyQueueName;
                     }
 
-                    channel.BasicPublish(
-                        exchange: this.ExchangeName ?? "",
-                        routingKey: routing,
-                        basicProperties: props,
-                        body: Encoding.Unicode.GetBytes(JsonConvert.SerializeObject(message)));
+                    if (this.BusType == MessageBusTypeEnum.EXCHANGE)
+                    {
+                        channel.BasicPublish(
+                            exchange: this.ExchangeName ?? "",
+                            routingKey: routing,
+                            basicProperties: props,
+                            body: Encoding.Unicode.GetBytes(JsonConvert.SerializeObject(message)));
+                    }
+                    else if (this.BusType == MessageBusTypeEnum.QUEUE)
+                    {
+                        channel.BasicPublish(
+                            exchange: "",
+                            routingKey: "",
+                            basicProperties: props,
+                            body: Encoding.Unicode.GetBytes(JsonConvert.SerializeObject(message)));
+                    }
 
 
                     if (reply)
