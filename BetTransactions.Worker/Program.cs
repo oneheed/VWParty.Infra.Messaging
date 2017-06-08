@@ -1,4 +1,5 @@
-﻿using System;
+﻿using NLog;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -10,6 +11,7 @@ namespace BetTransactions.Worker
 {
     class Program
     {
+        static Logger _logger = LogManager.GetCurrentClassLogger();
         static void Main(string[] args)
         {
             //BetMessageBus bus = new BetMessageBus();
@@ -17,16 +19,19 @@ namespace BetTransactions.Worker
             {
                 bus.StartWorkers((bm) =>
                 {
-                    Console.WriteLine("[{0}] {1} ...", Thread.CurrentThread.ManagedThreadId, bm.Id);
+                    //Console.WriteLine("[{0:00}] {1} ...", Thread.CurrentThread.ManagedThreadId, bm.Id);
+                    _logger.Info(bm.Id);
                     return null;
                 }, 10);
 
                 Console.WriteLine("PRESS [ENTER] To Exit...");
                 Console.ReadLine();
 
-                Console.WriteLine("Shutdown worker...");
+                //Console.WriteLine("Shutdown worker...");
+                _logger.Info("Shutdown worker...");
                 bus.Stop();
-                Console.WriteLine("Shutdown complete.");
+                //Console.WriteLine("Shutdown complete.");
+                _logger.Info("Shutdown complete.");
             }
         }
     }

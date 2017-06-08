@@ -25,7 +25,10 @@ namespace VWParty.Infra.Messaging.Core
         protected MessageSubscriberBase(string queueName)
         {
             this.QueueName = queueName;
-            this._connection = MessageBusConfig.DefaultConnectionFactory.CreateConnection();
+            // this._connection = MessageBusConfig.DefaultConnectionFactory.CreateConnection();
+
+            ConnectionFactory cf = MessageBusConfig.DefaultConnectionFactory;
+            this._connection = MessageBusConfig.DefaultConnectionFactory.CreateConnection(cf.HostName.Split(','));
         }
 
         public delegate TOutputMessage SubscriberProcess(TInputMessage message);
@@ -34,6 +37,7 @@ namespace VWParty.Infra.Messaging.Core
 
         private Task[] running_worker_tasks = null;
         private bool _stop = true;
+        private bool _restart = true;
 
 
         public virtual void StartWorkers(SubscriberProcess process)
@@ -43,6 +47,7 @@ namespace VWParty.Infra.Messaging.Core
         public virtual void StartWorkers(SubscriberProcess process, int worker_count)
         {
             _stop = false;
+            _restart = false;
             Task[] tasks = new Task[worker_count];
 
             for (int index = 0; index < worker_count; index++)
@@ -67,7 +72,7 @@ namespace VWParty.Infra.Messaging.Core
 
             //Stopwatch totalWatch = new Stopwatch();
             //totalWatch.Start();
-            _logger.Info("WorkerThread({0}) - start running...", Thread.CurrentThread.ManagedThreadId);
+            _logger.Trace("WorkerThread({0}) - start running...", Thread.CurrentThread.ManagedThreadId);
 
             //using (var connection = MessageBusConfig.DefaultConnectionFactory.CreateConnection()) //this.connectionFactory.CreateConnection())
             using (var channel = this._connection.CreateModel())
@@ -88,12 +93,13 @@ namespace VWParty.Infra.Messaging.Core
                     noAck: false,
                     consumer: consumer);
 
-                while (this._stop == false)
+                while (this._stop == false && this._restart == false)
                 {
                     BasicDeliverEventArgs ea;
+
                     if (consumer.Queue.Dequeue(100, out ea) == false) continue;
 
-                    _logger.Info("WorkerThread({0}) - receive message: {1}", Thread.CurrentThread.ManagedThreadId, ea.BasicProperties.MessageId);
+                    _logger.Trace("WorkerThread({0}) - receive message: {1}", Thread.CurrentThread.ManagedThreadId, ea.BasicProperties.MessageId);
 
                     TOutputMessage response = null;
 
@@ -109,13 +115,13 @@ namespace VWParty.Infra.Messaging.Core
                     {
                         TInputMessage request = JsonConvert.DeserializeObject<TInputMessage>(Encoding.Unicode.GetString(body));
 
-                        _logger.Info("WorkerThread({0}) - before processing message: {1}", Thread.CurrentThread.ManagedThreadId, props.MessageId);
+                        _logger.Trace("WorkerThread({0}) - before processing message: {1}", Thread.CurrentThread.ManagedThreadId, props.MessageId);
                         //this.CurrentZeusRequestId = request.request_id;
                         response = process(request);
                         // TODO: 如果 process( ) 出現 exception, 目前的 code 還無法有效處理
 
 
-                        _logger.Info("WorkerThread({0}) - message was processed: {1}", Thread.CurrentThread.ManagedThreadId, props.MessageId);
+                        _logger.Trace("WorkerThread({0}) - message was processed: {1}", Thread.CurrentThread.ManagedThreadId, props.MessageId);
 
                     }
                     catch (Exception e)
@@ -150,8 +156,8 @@ namespace VWParty.Infra.Messaging.Core
             }
 
             //totalWatch.Stop();
-            //_logger.Info("WorkerThread({0}) - stopped (elapsed seconds: {1})", Thread.CurrentThread.ManagedThreadId, totalWatch.Elapsed.TotalSeconds.ToString("0.000"));
-            _logger.Info("WorkerThread({0}) - stopped.", Thread.CurrentThread.ManagedThreadId);
+            //_logger.Trace("WorkerThread({0}) - stopped (elapsed seconds: {1})", Thread.CurrentThread.ManagedThreadId, totalWatch.Elapsed.TotalSeconds.ToString("0.000"));
+            _logger.Trace("WorkerThread({0}) - {1}.", Thread.CurrentThread.ManagedThreadId, this._stop?"stopped":"restarting");
 
         }
 

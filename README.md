@@ -26,3 +26,13 @@ worker 的處理模式教學。這段說明 message 分派給 worker 後，worke
 * [Reliability Guide](https://www.rabbitmq.com/reliability.html)
 * [Consumer Acknowledgements and Publisher Confirms](https://www.rabbitmq.com/confirms.html)
 * [Time-To-Live Extensions](https://www.rabbitmq.com/ttl.html)
+
+
+
+
+# POC-SETUP
+
+1. 建立 exchange: tp-transaction, direct mode, durable
+2. 建立 queue: bet_test, durable, NO autodelete
+3. (1) 與 (2) 之間建立 binding, routing key: letou
+

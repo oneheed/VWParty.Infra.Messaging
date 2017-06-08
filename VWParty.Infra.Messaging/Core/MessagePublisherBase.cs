@@ -16,6 +16,8 @@ namespace VWParty.Infra.Messaging.Core
     {
         private static Logger _logger = LogManager.GetCurrentClassLogger();
 
+        public bool IsWaitReturn { get; set; }
+
         //internal string MessageBusConfigName { get; set; }
         internal string ExchangeName { get; set; }
 
@@ -45,7 +47,7 @@ namespace VWParty.Infra.Messaging.Core
         public virtual void PublishMessage(string routing, TInputMessage message)
         {
             this.PublishAndWaitResponseMessage(
-                false,
+                this.IsWaitReturn,
                 TimeSpan.FromSeconds(15),
                 TimeSpan.FromMinutes(30),
                 routing,
@@ -73,38 +75,64 @@ namespace VWParty.Infra.Messaging.Core
             string routing,
             TInputMessage message)
         {
-            using (var connection = MessageBusConfig.DefaultConnectionFactory.CreateConnection())
+            int retry_count = 3;
+            TimeSpan retryWait = TimeSpan.FromSeconds(3);
+
+            //bool is_sent_complete = false;
+            //bool is_receive_complete = false;
+            //string correlationId = Guid.NewGuid().ToString("N");
+
+            //using (var connection = MessageBusConfig.DefaultConnectionFactory.CreateConnection())
+            ConnectionFactory cf = MessageBusConfig.DefaultConnectionFactory;
+
+            //while(retry_count > 0)
+            while(true)
+            using (var connection = MessageBusConfig.DefaultConnectionFactory.CreateConnection(cf.HostName.Split(',')))
             using (var channel = connection.CreateModel())
             {
+                if (retry_count <= 0) throw new Exception("RetryLimitException");
+
+
                 string replyQueueName = null;
                 QueueingBasicConsumer consumer = null;
 
-                if (this.BusType == MessageBusTypeEnum.QUEUE)
-                {
-                    channel.QueueDeclare(
-                        //queue: routing,
-                        queue: this.QueueName,
-                        durable: true,
-                        exclusive: false,
-                        autoDelete: false,
-                        arguments: null);
-                }
-                else if (this.BusType == MessageBusTypeEnum.EXCHANGE)
-                {
-                    channel.ExchangeDeclare(
-                        this.ExchangeName,
-                        this.ExchangeType,
-                        true,
-                        false,
-                        null);
-                }
-                else
-                {
-                    throw new InvalidOperationException();
-                }
 
+                    try
+                    {
+                        if (this.BusType == MessageBusTypeEnum.QUEUE)
+                        {
+                            channel.QueueDeclare(
+                                //queue: routing,
+                                queue: this.QueueName,
+                                durable: true,
+                                exclusive: false,
+                                autoDelete: false,
+                                arguments: null);
+                        }
+                        else if (this.BusType == MessageBusTypeEnum.EXCHANGE)
+                        {
+                            channel.ExchangeDeclare(
+                                this.ExchangeName,
+                                this.ExchangeType,
+                                true,
+                                false,
+                                null);
+                        }
+                        else
+                        {
+                            throw new InvalidOperationException();
+                        }
+                    }
+                    catch (TopologyRecoveryException ex)
+                    {
+                        // connection fail.
+                        _logger.Warn("Retry (left: {0}) ...", retry_count);
+                        retry_count--;
+                        Task.Delay(retryWait).Wait();
+                        continue;
+                    }
 
-                if (reply)
+                    if (reply)
                 {
                     replyQueueName = channel.QueueDeclare().QueueName;
                     consumer = new QueueingBasicConsumer(channel);
@@ -168,6 +196,8 @@ namespace VWParty.Infra.Messaging.Core
                                 messageExpirationTimeout));
                         }
                     }
+
+                    break;
                 }
                 finally
                 {

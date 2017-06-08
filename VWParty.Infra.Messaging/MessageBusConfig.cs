@@ -43,6 +43,11 @@ namespace VWParty.Infra.Messaging
             ConnectionFactory fac = new ConnectionFactory();
             fac.Port = 5672; // set default port
 
+            //fac.AutomaticRecoveryEnabled = true;
+            //fac.NetworkRecoveryInterval = TimeSpan.FromSeconds(5.0);
+            //fac.RequestedHeartbeat = 3;
+            fac.TopologyRecoveryEnabled = true;
+
             foreach (string segment in connstr.Split(';'))
             {
                 string[] temp = segment.Split('=');
@@ -56,7 +61,6 @@ namespace VWParty.Infra.Messaging
                 switch (name)
                 {
                     case "server":
-                        //QueueHostName = value;
                         fac.HostName = value;
                         break;
 
