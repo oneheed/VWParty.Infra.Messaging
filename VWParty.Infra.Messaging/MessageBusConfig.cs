@@ -46,9 +46,9 @@ namespace VWParty.Infra.Messaging
             ConnectionFactory fac = new ConnectionFactory();
             fac.Port = 5672; // set default port
 
-            //fac.AutomaticRecoveryEnabled = true;
-            //fac.NetworkRecoveryInterval = TimeSpan.FromSeconds(5.0);
-            //fac.RequestedHeartbeat = 3;
+            fac.AutomaticRecoveryEnabled = true;
+            fac.NetworkRecoveryInterval = TimeSpan.FromSeconds(3.0);
+            fac.RequestedHeartbeat = 3;
             fac.TopologyRecoveryEnabled = true;
 
             foreach (string segment in connstr.Split(';'))
