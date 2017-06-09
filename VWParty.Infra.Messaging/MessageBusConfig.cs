@@ -13,6 +13,9 @@ namespace VWParty.Infra.Messaging
     {
         private static string DefaultName = "MessageBus";
 
+        public static int DefaultRetryCount = 3;
+        public static TimeSpan DefaultRetryWaitTime = TimeSpan.FromSeconds(3.0);
+
         public static ConnectionFactory DefaultConnectionFactory
         {
             get

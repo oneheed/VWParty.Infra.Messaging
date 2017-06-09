@@ -26,11 +26,13 @@ namespace BetTransactions.Client
             timer.Start();
             for (int i = 1; i <= 1000000; i++)
             {
-                //Task.Delay(150).Wait();
+                Task.Delay(300).Wait();
                 bus.PublishMessage("letou", new BetTransactionMessage()
                 {
                     Id = string.Format("{0}-{1}", i, Guid.NewGuid())
                 });
+                Console.Write('.');
+
                 if (i % 100 == 0)
                 {
                     Console.WriteLine("Message Published: {0}, {1:0.00} msg/sec", i, 100 * 1000 / timer.ElapsedMilliseconds);

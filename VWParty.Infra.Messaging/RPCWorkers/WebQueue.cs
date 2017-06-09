@@ -30,21 +30,14 @@ namespace VWParty.Infra.Messaging.RPCWorkers
         }
         public ResponseMessage CallWorkerProcess(RequestMessage request, TimeSpan messageExpirationTimeout)
         {
-            return this.PublishAndWaitResponseMessage(
+            return this.PublishAndWaitResponseMessageAsync(
                 true,
                 TimeSpan.FromSeconds(10),
                 messageExpirationTimeout,
-                //this.QueueName,
                 this.QueueName,
-                request);
+                request).Result;
         }
-
-
-
-        //public void Dispose()
-        //{
-        //    _logger.Info("close webqueue connection.");
-        //}
+        
     }
 
 

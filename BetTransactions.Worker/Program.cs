@@ -14,10 +14,10 @@ namespace BetTransactions.Worker
         static Logger _logger = LogManager.GetCurrentClassLogger();
         static void Main(string[] args)
         {
-            //BetMessageBus bus = new BetMessageBus();
+
             using (BetMessageSubscriber bus = new BetMessageSubscriber("bet_test"))
             {
-                bus.StartWorkers((bm) =>
+                var result = bus.StartWorkersAsync((bm) =>
                 {
                     //Console.WriteLine("[{0:00}] {1} ...", Thread.CurrentThread.ManagedThreadId, bm.Id);
                     _logger.Info(bm.Id);
@@ -27,12 +27,18 @@ namespace BetTransactions.Worker
                 Console.WriteLine("PRESS [ENTER] To Exit...");
                 Console.ReadLine();
 
-                //Console.WriteLine("Shutdown worker...");
+
+                Console.WriteLine("Shutdown worker...");
                 _logger.Info("Shutdown worker...");
-                bus.Stop();
-                //Console.WriteLine("Shutdown complete.");
+
+                bus.StopWorker();
+                result.Wait();
+
+                Console.WriteLine("Shutdown complete.");
                 _logger.Info("Shutdown complete.");
+
             }
+            
         }
     }
 }

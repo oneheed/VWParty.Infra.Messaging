@@ -2,6 +2,7 @@
 using NLog;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
+using RabbitMQ.Client.Exceptions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -46,37 +47,63 @@ namespace VWParty.Infra.Messaging.Core
 
         public virtual void PublishMessage(string routing, TInputMessage message)
         {
-            this.PublishAndWaitResponseMessage(
+            this.PublishAndWaitResponseMessageAsync(
                 this.IsWaitReturn,
                 TimeSpan.FromSeconds(15),
                 TimeSpan.FromMinutes(30),
                 routing,
-                message);
+                message).Wait();
         }
 
 
-        protected async Task<TOutputMessage> PublishAndWaitResponseMessageAsync(
+        //protected async Task<TOutputMessage> PublishAndWaitResponseMessageAsync(
+        //    bool reply,
+        //    TimeSpan waitReplyTimeout,
+        //    TimeSpan messageExpirationTimeout,
+        //    string routing,
+        //    TInputMessage message)
+        //{
+        //    return await Task.Run<TOutputMessage>(() =>
+        //    {
+        //        return this.PublishAndWaitResponseMessage(
+        //            reply, 
+        //            waitReplyTimeout, 
+        //            messageExpirationTimeout, 
+        //            routing, 
+        //            message,
+        //            3,
+        //            TimeSpan.FromSeconds(3));
+        //    });
+        //}
+        protected virtual async Task<TOutputMessage> PublishAndWaitResponseMessageAsync(
             bool reply,
             TimeSpan waitReplyTimeout,
             TimeSpan messageExpirationTimeout,
             string routing,
             TInputMessage message)
         {
-            return await Task.Run<TOutputMessage>(() =>
-            {
-                return this.PublishAndWaitResponseMessage(reply, waitReplyTimeout, messageExpirationTimeout, routing, message);
-            });
+
+            return await this.PublishAndWaitResponseMessageAsync(
+                reply,
+                waitReplyTimeout,
+                messageExpirationTimeout,
+                routing,
+                message,
+                MessageBusConfig.DefaultRetryCount,
+                MessageBusConfig.DefaultRetryWaitTime);
+
         }
 
-        protected virtual TOutputMessage PublishAndWaitResponseMessage(
+
+        protected virtual async Task<TOutputMessage> PublishAndWaitResponseMessageAsync(
             bool reply,
             TimeSpan waitReplyTimeout,
             TimeSpan messageExpirationTimeout,
             string routing,
-            TInputMessage message)
+            TInputMessage message,
+            int retry_count,
+            TimeSpan retryWait)
         {
-            int retry_count = 3;
-            TimeSpan retryWait = TimeSpan.FromSeconds(3);
 
             //bool is_sent_complete = false;
             //bool is_receive_complete = false;
@@ -86,15 +113,16 @@ namespace VWParty.Infra.Messaging.Core
             ConnectionFactory cf = MessageBusConfig.DefaultConnectionFactory;
 
             //while(retry_count > 0)
-            while(true)
-            using (var connection = MessageBusConfig.DefaultConnectionFactory.CreateConnection(cf.HostName.Split(',')))
-            using (var channel = connection.CreateModel())
+            while (true)
             {
-                if (retry_count <= 0) throw new Exception("RetryLimitException");
+                using (var connection = MessageBusConfig.DefaultConnectionFactory.CreateConnection(cf.HostName.Split(',')))
+                using (var channel = connection.CreateModel())
+                {
+                    if (retry_count <= 0) throw new Exception("RetryLimitException");
 
 
-                string replyQueueName = null;
-                QueueingBasicConsumer consumer = null;
+                    string replyQueueName = null;
+                    QueueingBasicConsumer consumer = null;
 
 
                     try
@@ -122,93 +150,97 @@ namespace VWParty.Infra.Messaging.Core
                         {
                             throw new InvalidOperationException();
                         }
+
+
+                        if (reply)
+                        {
+                            replyQueueName = channel.QueueDeclare().QueueName;
+                            consumer = new QueueingBasicConsumer(channel);
+                            channel.BasicConsume(
+                                queue: replyQueueName,
+                                noAck: true,
+                                consumer: consumer);
+                        }
                     }
-                    catch (TopologyRecoveryException ex)
+                    //catch (TopologyRecoveryException ex)
+                    catch
                     {
                         // connection fail.
                         _logger.Warn("Retry (left: {0}) ...", retry_count);
+                        Console.WriteLine("Retry..");
                         retry_count--;
-                        Task.Delay(retryWait).Wait();
+                        await Task.Delay(retryWait);
                         continue;
                     }
 
-                    if (reply)
-                {
-                    replyQueueName = channel.QueueDeclare().QueueName;
-                    consumer = new QueueingBasicConsumer(channel);
-                    channel.BasicConsume(
-                        queue: replyQueueName,
-                        noAck: true,
-                        consumer: consumer);
-                }
 
 
-                try
-                {
-                    IBasicProperties props = channel.CreateBasicProperties();
-                    props.ContentType = "application/json";
-                    props.Expiration = messageExpirationTimeout.TotalMilliseconds.ToString();
-
-                    if (reply)
+                    try
                     {
-                        message.correlationId =
-                        props.CorrelationId = Guid.NewGuid().ToString("N");
-                        props.ReplyTo = replyQueueName;
-                    }
+                        IBasicProperties props = channel.CreateBasicProperties();
+                        props.ContentType = "application/json";
+                        props.Expiration = messageExpirationTimeout.TotalMilliseconds.ToString();
 
-                    if (this.BusType == MessageBusTypeEnum.EXCHANGE)
-                    {
-                        channel.BasicPublish(
-                            exchange: this.ExchangeName ?? "",
-                            routingKey: routing,
-                            basicProperties: props,
-                            body: Encoding.Unicode.GetBytes(JsonConvert.SerializeObject(message)));
-                    }
-                    else if (this.BusType == MessageBusTypeEnum.QUEUE)
-                    {
-                        channel.BasicPublish(
-                            exchange: "",
-                            routingKey: this.QueueName,
-                            basicProperties: props,
-                            body: Encoding.Unicode.GetBytes(JsonConvert.SerializeObject(message)));
-                    }
-
-
-                    if (reply)
-                    {
-                        BasicDeliverEventArgs ea;
-                        if (consumer.Queue.Dequeue((int)waitReplyTimeout.TotalMilliseconds, out ea))
+                        if (reply)
                         {
-                            // done, receive response message
-                            TOutputMessage response = JsonConvert.DeserializeObject<TOutputMessage>(Encoding.Unicode.GetString(ea.Body));
-
-                            //if (string.IsNullOrEmpty(response.exception) == false)
-                            //{
-                            //    throw new Exception("RPC Exception: " + response.exception);
-                            //}
-                            return response;
+                            message.correlationId =
+                            props.CorrelationId = Guid.NewGuid().ToString("N");
+                            props.ReplyTo = replyQueueName;
                         }
-                        else
+
+                        if (this.BusType == MessageBusTypeEnum.EXCHANGE)
                         {
-                            // timeout, do not wait anymore
-                            throw new TimeoutException(string.Format(
-                                "MessageBus 沒有在訊息指定的時間內 ({0}) 收到 ResponseMessage 回覆。",
-                                messageExpirationTimeout));
+                            channel.BasicPublish(
+                                exchange: this.ExchangeName ?? "",
+                                routingKey: routing,
+                                basicProperties: props,
+                                body: Encoding.Unicode.GetBytes(JsonConvert.SerializeObject(message)));
+                        }
+                        else if (this.BusType == MessageBusTypeEnum.QUEUE)
+                        {
+                            channel.BasicPublish(
+                                exchange: "",
+                                routingKey: this.QueueName,
+                                basicProperties: props,
+                                body: Encoding.Unicode.GetBytes(JsonConvert.SerializeObject(message)));
+                        }
+
+
+                        if (reply)
+                        {
+                            BasicDeliverEventArgs ea;
+                            if (consumer.Queue.Dequeue((int)waitReplyTimeout.TotalMilliseconds, out ea))
+                            {
+                                // done, receive response message
+                                TOutputMessage response = JsonConvert.DeserializeObject<TOutputMessage>(Encoding.Unicode.GetString(ea.Body));
+
+                                //if (string.IsNullOrEmpty(response.exception) == false)
+                                //{
+                                //    throw new Exception("RPC Exception: " + response.exception);
+                                //}
+                                return response;
+                            }
+                            else
+                            {
+                                // timeout, do not wait anymore
+                                throw new TimeoutException(string.Format(
+                                    "MessageBus 沒有在訊息指定的時間內 ({0}) 收到 ResponseMessage 回覆。",
+                                    messageExpirationTimeout));
+                            }
+                        }
+
+                        break;
+                    }
+                    finally
+                    {
+                        if (reply && string.IsNullOrEmpty(replyQueueName) == false)
+                        {
+                            channel.QueueDelete(replyQueueName);
                         }
                     }
 
-                    break;
                 }
-                finally
-                {
-                    if (reply && string.IsNullOrEmpty(replyQueueName) == false)
-                    {
-                        channel.QueueDelete(replyQueueName);
-                    }
-                }
-
             }
-
             return null;
         }
 

@@ -27,37 +27,83 @@ namespace VWParty.Infra.Messaging.Core
             this.QueueName = queueName;
             // this._connection = MessageBusConfig.DefaultConnectionFactory.CreateConnection();
 
-            ConnectionFactory cf = MessageBusConfig.DefaultConnectionFactory;
-            this._connection = MessageBusConfig.DefaultConnectionFactory.CreateConnection(cf.HostName.Split(','));
         }
 
         public delegate TOutputMessage SubscriberProcess(TInputMessage message);
 
 
-
+        [Obsolete]
         private Task[] running_worker_tasks = null;
+
         private bool _stop = true;
-        private bool _restart = true;
+        //private bool _restart = true;
+
+        private bool _is_restart = false;
 
 
         public virtual void StartWorkers(SubscriberProcess process)
         {
-            this.StartWorkers(process, 1);
+            this.StartWorkersAsync(process, 1).Wait();
         }
+
         public virtual void StartWorkers(SubscriberProcess process, int worker_count)
         {
-            _stop = false;
-            _restart = false;
-            Task[] tasks = new Task[worker_count];
-
-            for (int index = 0; index < worker_count; index++)
-            {
-                tasks[index] = Task.Run(() => { this.StartProcessSubscribedMessage(process); });
-            }
-
-            this.running_worker_tasks = tasks;
+            this.StartWorkersAsync(process, worker_count).Wait();
         }
 
+        public virtual async Task StartWorkersAsync(SubscriberProcess process, int worker_count)
+        {
+            await this.StartWorkersAsync(
+                process,
+                worker_count,
+                MessageBusConfig.DefaultRetryCount,
+                MessageBusConfig.DefaultRetryWaitTime);
+        }
+
+
+        private object _sync_root = new object();
+        private bool _worker_running = false;
+
+        public virtual async Task StartWorkersAsync(SubscriberProcess process, int worker_count, int retry_count, TimeSpan retry_timeout)
+        {
+            lock (this._sync_root)
+            {
+                if (this._worker_running) throw new InvalidOperationException("worker already started.");
+                this._worker_running = true;
+            }
+
+            while (retry_count > 0)
+            {
+                ConnectionFactory cf = MessageBusConfig.DefaultConnectionFactory;
+                this._connection = MessageBusConfig.DefaultConnectionFactory.CreateConnection(cf.HostName.Split(','));
+
+                _stop = false;
+                _is_restart = false;
+                Task[] tasks = new Task[worker_count];
+
+                for (int index = 0; index < worker_count; index++)
+                {
+                    tasks[index] = Task.Run(() => { this.StartProcessSubscribedMessage(process); });
+                }
+
+                await Task.Run(() => { Task.WaitAll(tasks); });
+
+                if (this._is_restart == false) break;
+                retry_count--;
+                await Task.Delay(retry_timeout);
+                _logger.Warn("connection fail, restarting...");
+            }
+
+            lock (this._sync_root)
+            {
+                this._worker_running = false;
+            }
+
+            if (this._is_restart && retry_count == 0) throw new Exception("retry count limit");
+        }
+
+
+        [Obsolete("use async mode instead. Use StartWorkerAsync / StopWorker API")]
         public virtual void Stop()
         {
             this._stop = true;
@@ -65,6 +111,22 @@ namespace VWParty.Infra.Messaging.Core
             Task.WaitAll(this.running_worker_tasks);
         }
 
+        public virtual void StopWorker()
+        {
+            this._stop = true;
+        }
+
+        //public virtual bool Wait(TimeSpan timeout)
+        //{
+        //    return Task.WaitAll(this.running_worker_tasks, (int)timeout.TotalMilliseconds);
+        //}
+        //public virtual bool IsNeedRestart
+        //{
+        //    get
+        //    {
+        //        return this._is_restart;
+        //    }
+        //}
 
         protected virtual void StartProcessSubscribedMessage(SubscriberProcess process)
         {
@@ -93,13 +155,26 @@ namespace VWParty.Infra.Messaging.Core
                     noAck: false,
                     consumer: consumer);
 
-                while (this._stop == false && this._restart == false)
+                while (this._stop == false)
                 {
                     BasicDeliverEventArgs ea;
 
-                    if (consumer.Queue.Dequeue(100, out ea) == false) continue;
+                    try
+                    {
+                        if (consumer.Queue.Dequeue(100, out ea) == false) continue;
+                        _logger.Trace("WorkerThread({0}) - receive message: {1}", Thread.CurrentThread.ManagedThreadId, ea.BasicProperties.MessageId);
+                    }
+                    catch (Exception ex)
+                    {
+                        this._stop = true;
+                        this._is_restart = true;
+                        _logger.Warn(ex, "dequeue exception, restart subscriber...");
 
-                    _logger.Trace("WorkerThread({0}) - receive message: {1}", Thread.CurrentThread.ManagedThreadId, ea.BasicProperties.MessageId);
+                        ea = null;
+                        break;
+                    }
+
+
 
                     TOutputMessage response = null;
 
@@ -163,10 +238,14 @@ namespace VWParty.Infra.Messaging.Core
 
         public void Dispose()
         {
-            if (this._connection != null)
+            try
             {
-                this._connection.Close();
+                if (this._connection != null)
+                {
+                    this._connection.Close();
+                }
             }
+            catch { }
         }
     }
 }
