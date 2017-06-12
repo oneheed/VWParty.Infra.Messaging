@@ -8,8 +8,8 @@ namespace VWParty.Infra.Messaging.Core
 {
     public class InputMessageBase
     {
-        public string requestId { get; set; }
-        public DateTime requestStartUtcTime { get; set; }
+        //public string requestId { get; set; }
+        //public DateTime requestStartUtcTime { get; set; }
         public string correlationId { get; set; }
     }
 }

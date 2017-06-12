@@ -8,10 +8,11 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using VWParty.Infra.LogTracking;
 
 namespace VWParty.Infra.Messaging.Core
 {
-    public class MessageSubscriberBase<TInputMessage, TOutputMessage> : IDisposable
+    public abstract class MessageSubscriberBase<TInputMessage, TOutputMessage> : IDisposable
         where TInputMessage : InputMessageBase
         where TOutputMessage : OutputMessageBase
     {
@@ -29,7 +30,7 @@ namespace VWParty.Infra.Messaging.Core
 
         }
 
-        public delegate TOutputMessage SubscriberProcess(TInputMessage message);
+        public delegate TOutputMessage SubscriberProcess(TInputMessage message, LogTrackerContext logtracker);
 
 
         [Obsolete]
@@ -189,13 +190,37 @@ namespace VWParty.Infra.Messaging.Core
                     var replyProps = channel.CreateBasicProperties();
                     replyProps.CorrelationId = props.CorrelationId;
 
+                    LogTrackerContext logtracker = null;
+
+                    if (props.Headers == null || props.Headers[LogTrackerContext._KEY_REQUEST_ID] == null)
+                    {
+                        // message without logtracker context info
+                        logtracker = LogTrackerContext.Init(LogTrackerContextStorageTypeEnum.NONE);
+                    }
+                    else
+                    {
+                        string req_id = Encoding.UTF8.GetString((byte[])props.Headers[LogTrackerContext._KEY_REQUEST_ID]);
+                        DateTime req_time = DateTime.Parse(Encoding.UTF8.GetString((byte[])props.Headers[LogTrackerContext._KEY_REQUEST_START_UTCTIME])).ToUniversalTime();
+
+                        logtracker = LogTrackerContext.Init(
+                            LogTrackerContextStorageTypeEnum.NONE,
+                            req_id,
+                            req_time);
+                    }
+
+                    //replyProps.Headers = new Dictionary<string, object>();
+                    //replyProps.Headers.Add(LogTrackerContext._KEY_REQUEST_ID, logtracker.RequestId);
+                    //replyProps.Headers.Add(LogTrackerContext._KEY_REQUEST_START_UTCTIME, logtracker.RequestStartTimeUTC_Text);
+
                     try
                     {
                         TInputMessage request = JsonConvert.DeserializeObject<TInputMessage>(Encoding.Unicode.GetString(body));
 
                         _logger.Trace("WorkerThread({0}) - before processing message: {1}", Thread.CurrentThread.ManagedThreadId, props.MessageId);
                         //this.CurrentZeusRequestId = request.request_id;
-                        response = process(request);
+
+                        response = process(request, logtracker);
+                        
                         // TODO: 如果 process( ) 出現 exception, 目前的 code 還無法有效處理
 
 

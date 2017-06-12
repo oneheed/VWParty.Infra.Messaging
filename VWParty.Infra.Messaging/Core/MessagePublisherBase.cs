@@ -8,10 +8,18 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using VWParty.Infra.LogTracking;
 
 namespace VWParty.Infra.Messaging.Core
 {
-    public class MessagePublisherBase<TInputMessage, TOutputMessage> : IDisposable
+    //public abstract class MessageOneWayPublisherBase<TInputMessage> : MessagePublisherBase<TInputMessage, OutputMessageBase>
+    //    : where TInputMessage : InputMessageBase
+    //{
+
+    //}
+
+
+    public abstract class MessagePublisherBase<TInputMessage, TOutputMessage> : IDisposable
         where TInputMessage : InputMessageBase
         where TOutputMessage : OutputMessageBase
     {
@@ -52,7 +60,10 @@ namespace VWParty.Infra.Messaging.Core
                 TimeSpan.FromSeconds(15),
                 TimeSpan.FromMinutes(30),
                 routing,
-                message).Wait();
+                message,
+                MessageBusConfig.DefaultRetryCount,
+                MessageBusConfig.DefaultRetryWaitTime,
+                LogTrackerContext.Current).Wait();
         }
 
 
@@ -75,24 +86,24 @@ namespace VWParty.Infra.Messaging.Core
         //            TimeSpan.FromSeconds(3));
         //    });
         //}
-        protected virtual async Task<TOutputMessage> PublishAndWaitResponseMessageAsync(
-            bool reply,
-            TimeSpan waitReplyTimeout,
-            TimeSpan messageExpirationTimeout,
-            string routing,
-            TInputMessage message)
-        {
+        //protected virtual async Task<TOutputMessage> PublishAndWaitResponseMessageAsync(
+        //    bool reply,
+        //    TimeSpan waitReplyTimeout,
+        //    TimeSpan messageExpirationTimeout,
+        //    string routing,
+        //    TInputMessage message)
+        //{
 
-            return await this.PublishAndWaitResponseMessageAsync(
-                reply,
-                waitReplyTimeout,
-                messageExpirationTimeout,
-                routing,
-                message,
-                MessageBusConfig.DefaultRetryCount,
-                MessageBusConfig.DefaultRetryWaitTime);
+        //    return await this.PublishAndWaitResponseMessageAsync(
+        //        reply,
+        //        waitReplyTimeout,
+        //        messageExpirationTimeout,
+        //        routing,
+        //        message,
+        //        MessageBusConfig.DefaultRetryCount,
+        //        MessageBusConfig.DefaultRetryWaitTime);
 
-        }
+        //}
 
 
         protected virtual async Task<TOutputMessage> PublishAndWaitResponseMessageAsync(
@@ -102,7 +113,8 @@ namespace VWParty.Infra.Messaging.Core
             string routing,
             TInputMessage message,
             int retry_count,
-            TimeSpan retryWait)
+            TimeSpan retryWait,
+            LogTrackerContext logtracker)
         {
 
             //bool is_sent_complete = false;
@@ -186,6 +198,25 @@ namespace VWParty.Infra.Messaging.Core
                         props.ContentType = "application/json";
                         props.Expiration = messageExpirationTimeout.TotalMilliseconds.ToString();
 
+                        if (logtracker == null)
+                        {
+                            logtracker = LogTrackerContext.Init(LogTrackerContextStorageTypeEnum.NONE);
+                        }
+
+                        props.Headers = new Dictionary<string, object>()
+                        {
+                            {
+                                LogTrackerContext._KEY_REQUEST_ID,
+                                logtracker.RequestId//Encoding.Unicode.GetBytes(logtracker.RequestId)
+                            },
+                            {
+                                LogTrackerContext._KEY_REQUEST_START_UTCTIME,
+                                logtracker.RequestStartTimeUTC_Text//Encoding.Unicode.GetBytes(logtracker.RequestStartTimeUTC_Text)
+                            }
+                        };
+                        //props.Headers.Add(LogTrackerContext._KEY_REQUEST_ID, logtracker.RequestId);
+                        //props.Headers.Add(LogTrackerContext._KEY_REQUEST_START_UTCTIME, logtracker.RequestStartTimeUTC_Text);
+
                         if (reply)
                         {
                             message.correlationId =
@@ -193,6 +224,9 @@ namespace VWParty.Infra.Messaging.Core
                             props.ReplyTo = replyQueueName;
                         }
 
+
+
+                        //Console.WriteLine(logtracker.RequestId + JsonConvert.SerializeObject(message, Formatting.Indented));
                         if (this.BusType == MessageBusTypeEnum.EXCHANGE)
                         {
                             channel.BasicPublish(

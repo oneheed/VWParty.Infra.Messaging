@@ -41,12 +41,12 @@ namespace VWParty.Infra.Messaging.RPCWorkers
         [Obsolete("只為了向前相容而設計的wrapper，請改用 SubscriberProcess")]
         public void StartWorkers(WorkerProcess process, int worker_count)
         {
-            SubscriberProcess x = (req) => {
+            SubscriberProcess x = (req, tracker) => {
                 this.CurrentZeusRequestId = req.request_id;
                 return process(req);
             };
             this.StartWorkers(
-                (SubscriberProcess)((req) => 
+                (SubscriberProcess)((req, tracker) => 
                 {
                     this.CurrentZeusRequestId = req.request_id;
                     return process(req);

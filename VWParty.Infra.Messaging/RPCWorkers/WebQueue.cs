@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
+using VWParty.Infra.LogTracking;
 using VWParty.Infra.Messaging.Core;
 
 namespace VWParty.Infra.Messaging.RPCWorkers
@@ -35,7 +36,10 @@ namespace VWParty.Infra.Messaging.RPCWorkers
                 TimeSpan.FromSeconds(10),
                 messageExpirationTimeout,
                 this.QueueName,
-                request).Result;
+                request,
+                MessageBusConfig.DefaultRetryCount,
+                MessageBusConfig.DefaultRetryWaitTime,
+                LogTrackerContext.Current).Result;
         }
         
     }

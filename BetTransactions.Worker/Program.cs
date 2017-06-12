@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using VWParty.Infra.LogTracking;
 using VWParty.Infra.Messaging.BetTransactions;
 
 namespace BetTransactions.Worker
@@ -17,8 +18,9 @@ namespace BetTransactions.Worker
 
             using (BetMessageSubscriber bus = new BetMessageSubscriber("bet_test"))
             {
-                var result = bus.StartWorkersAsync((bm) =>
+                var result = bus.StartWorkersAsync((bm, tracker) =>
                 {
+                    LogTrackerContext.Init(LogTrackerContextStorageTypeEnum.THREAD_DATASLOT, tracker);
                     //Console.WriteLine("[{0:00}] {1} ...", Thread.CurrentThread.ManagedThreadId, bm.Id);
                     _logger.Info(bm.Id);
                     return new VWParty.Infra.Messaging.Core.OutputMessageBase();
