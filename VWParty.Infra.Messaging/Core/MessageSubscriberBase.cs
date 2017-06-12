@@ -148,21 +148,26 @@ namespace VWParty.Infra.Messaging.Core
 
                 //channel.BasicQos(0, 1, false);
                 //var consumer = new EventingBasicConsumer(channel);
-                var consumer = new QueueingBasicConsumer(channel);
+                //var consumer = new QueueingBasicConsumer(channel);
 
-                channel.BasicConsume(
-                    queue: this.QueueName,
-                    noAck: false,
-                    consumer: consumer);
+                //channel.BasicConsume(
+                //    queue: this.QueueName,
+                //    noAck: false,
+                //    consumer: consumer);
 
+                BasicGetResult result = null;
                 while (this._stop == false)
                 {
-                    BasicDeliverEventArgs ea;
-
                     try
                     {
-                        if (consumer.Queue.Dequeue(100, out ea) == false) continue;
-                        _logger.Trace("WorkerThread({0}) - receive message: {1}", Thread.CurrentThread.ManagedThreadId, ea.BasicProperties.MessageId);
+                        result = channel.BasicGet(this.QueueName, false);
+                        if (result == null)
+                        {
+                            Task.Delay(MessageBusConfig.DefaultPullWaitTime).Wait();
+                            continue;
+                        }
+                        _logger.Trace("WorkerThread({0}) - receive message: {1}", Thread.CurrentThread.ManagedThreadId, result.BasicProperties.MessageId);
+
                     }
                     catch (Exception ex)
                     {
@@ -170,16 +175,14 @@ namespace VWParty.Infra.Messaging.Core
                         this._is_restart = true;
                         _logger.Warn(ex, "dequeue exception, restart subscriber...");
 
-                        ea = null;
+                        result = null;
                         break;
                     }
 
-
-
                     TOutputMessage response = null;
 
-                    var body = ea.Body;
-                    var props = ea.BasicProperties;
+                    var body = result.Body;
+                    var props = result.BasicProperties;
 
                     bool current_reply = (string.IsNullOrEmpty(props.ReplyTo) == false);
 
@@ -223,7 +226,7 @@ namespace VWParty.Infra.Messaging.Core
                         }
                     
                         channel.BasicAck(
-                            deliveryTag: ea.DeliveryTag,
+                            deliveryTag: result.DeliveryTag,
                              multiple: false);
                     }
                 }

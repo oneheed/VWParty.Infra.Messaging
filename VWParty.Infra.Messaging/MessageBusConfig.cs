@@ -16,6 +16,8 @@ namespace VWParty.Infra.Messaging
         public static int DefaultRetryCount = 3;
         public static TimeSpan DefaultRetryWaitTime = TimeSpan.FromSeconds(3.0);
 
+        public static TimeSpan DefaultPullWaitTime = TimeSpan.FromMilliseconds(0);
+
         public static ConnectionFactory DefaultConnectionFactory
         {
             get
@@ -47,9 +49,9 @@ namespace VWParty.Infra.Messaging
             fac.Port = 5672; // set default port
 
             fac.AutomaticRecoveryEnabled = true;
-            fac.NetworkRecoveryInterval = TimeSpan.FromSeconds(3.0);
-            fac.RequestedHeartbeat = 3;
             fac.TopologyRecoveryEnabled = true;
+            fac.NetworkRecoveryInterval = TimeSpan.FromSeconds(3.0);
+            fac.RequestedHeartbeat = 15;
 
             foreach (string segment in connstr.Split(';'))
             {

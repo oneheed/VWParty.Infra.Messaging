@@ -21,7 +21,7 @@ namespace BetTransactions.Worker
                 {
                     //Console.WriteLine("[{0:00}] {1} ...", Thread.CurrentThread.ManagedThreadId, bm.Id);
                     _logger.Info(bm.Id);
-                    return null;
+                    return new VWParty.Infra.Messaging.Core.OutputMessageBase();
                 }, 10);
 
                 Console.WriteLine("PRESS [ENTER] To Exit...");

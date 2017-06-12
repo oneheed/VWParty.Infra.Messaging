@@ -55,10 +55,6 @@
       <Project>{0adb7a47-5d53-4917-b53a-c0041cf67d7f}</Project>
       <Name>VWParty.Infra.Messaging</Name>
     </ProjectReference>
-    <ProjectReference Include="..\Zeus.Messaging\Zeus.Messaging.csproj">
-      <Project>{b6c2382b-6569-4aa3-b5cc-924e0c9dff94}</Project>
-      <Name>Zeus.Messaging</Name>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

@@ -122,7 +122,7 @@ namespace VWParty.Infra.Messaging.Core
 
 
                     string replyQueueName = null;
-                    QueueingBasicConsumer consumer = null;
+//                    QueueingBasicConsumer consumer = null;
 
 
                     try
@@ -155,12 +155,17 @@ namespace VWParty.Infra.Messaging.Core
                         if (reply)
                         {
                             replyQueueName = channel.QueueDeclare().QueueName;
-                            consumer = new QueueingBasicConsumer(channel);
-                            channel.BasicConsume(
-                                queue: replyQueueName,
-                                noAck: true,
-                                consumer: consumer);
+                            //consumer = new QueueingBasicConsumer(channel);
+                            //channel.BasicConsume(
+                            //    queue: replyQueueName,
+                            //    noAck: true,
+                            //    consumer: consumer);
                         }
+
+
+
+
+
                     }
                     //catch (TopologyRecoveryException ex)
                     catch
@@ -208,16 +213,42 @@ namespace VWParty.Infra.Messaging.Core
 
                         if (reply)
                         {
-                            BasicDeliverEventArgs ea;
-                            if (consumer.Queue.Dequeue((int)waitReplyTimeout.TotalMilliseconds, out ea))
+                            //BasicDeliverEventArgs ea;
+                            //if (consumer.Queue.Dequeue((int)waitReplyTimeout.TotalMilliseconds, out ea))
+                            //{
+                            //    // done, receive response message
+                            //    TOutputMessage response = JsonConvert.DeserializeObject<TOutputMessage>(Encoding.Unicode.GetString(ea.Body));
+
+                            //    //if (string.IsNullOrEmpty(response.exception) == false)
+                            //    //{
+                            //    //    throw new Exception("RPC Exception: " + response.exception);
+                            //    //}
+                            //    return response;
+                            //}
+                            //else
+                            //{
+                            //    // timeout, do not wait anymore
+                            //    throw new TimeoutException(string.Format(
+                            //        "MessageBus 沒有在訊息指定的時間內 ({0}) 收到 ResponseMessage 回覆。",
+                            //        messageExpirationTimeout));
+                            //}
+
+
+
+
+                            BasicGetResult result = null;
+                            DateTime until = DateTime.Now.Add(waitReplyTimeout);
+                            while (result == null && DateTime.Now < until)
+                            {
+                                result = channel.BasicGet(replyQueueName, true);
+                                if (result == null) Task.Delay(MessageBusConfig.DefaultPullWaitTime).Wait();
+                            }
+
+                            if (result != null)
                             {
                                 // done, receive response message
-                                TOutputMessage response = JsonConvert.DeserializeObject<TOutputMessage>(Encoding.Unicode.GetString(ea.Body));
+                                TOutputMessage response = JsonConvert.DeserializeObject<TOutputMessage>(Encoding.Unicode.GetString(result.Body));
 
-                                //if (string.IsNullOrEmpty(response.exception) == false)
-                                //{
-                                //    throw new Exception("RPC Exception: " + response.exception);
-                                //}
                                 return response;
                             }
                             else
@@ -225,7 +256,7 @@ namespace VWParty.Infra.Messaging.Core
                                 // timeout, do not wait anymore
                                 throw new TimeoutException(string.Format(
                                     "MessageBus 沒有在訊息指定的時間內 ({0}) 收到 ResponseMessage 回覆。",
-                                    messageExpirationTimeout));
+                                    waitReplyTimeout));
                             }
                         }
 
