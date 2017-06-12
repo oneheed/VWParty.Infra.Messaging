@@ -240,7 +240,5 @@ ModelManifest.xml
 
 # FAKE - F# Make
 .fake/
-/BetTransactions.Client
-/BetTransactions.Worker
 /Zeus.Messaging.BetTransactions.Client
 /builds/0/project-1/
