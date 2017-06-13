@@ -87,7 +87,7 @@ namespace VWParty.Infra.Messaging.Core
                     tasks[index] = Task.Run(() => { this.StartProcessSubscribedMessage(process); });
                 }
 
-                await Task.Run(() => { Task.WaitAll(tasks); });
+                foreach(Task t in tasks) await t;
 
                 if (this._is_restart == false) break;
                 retry_count--;
@@ -95,7 +95,7 @@ namespace VWParty.Infra.Messaging.Core
                 _logger.Warn("connection fail, restarting...");
             }
 
-            lock (this._sync_root)
+            //lock (this._sync_root)
             {
                 this._worker_running = false;
             }
@@ -215,17 +215,10 @@ namespace VWParty.Infra.Messaging.Core
                     try
                     {
                         TInputMessage request = JsonConvert.DeserializeObject<TInputMessage>(Encoding.Unicode.GetString(body));
-
                         _logger.Trace("WorkerThread({0}) - before processing message: {1}", Thread.CurrentThread.ManagedThreadId, props.MessageId);
-                        //this.CurrentZeusRequestId = request.request_id;
-
                         response = process(request, logtracker);
-                        
                         // TODO: 如果 process( ) 出現 exception, 目前的 code 還無法有效處理
-
-
                         _logger.Trace("WorkerThread({0}) - message was processed: {1}", Thread.CurrentThread.ManagedThreadId, props.MessageId);
-
                     }
                     catch (Exception e)
                     {
@@ -233,7 +226,9 @@ namespace VWParty.Infra.Messaging.Core
                         //response.exception = e.ToString();
                         _logger.Warn(e, "WorkerThread({0}) - process message with exception: {1}, ex: {2}", Thread.CurrentThread.ManagedThreadId, props.MessageId, e);
                     }
-                    finally
+
+
+                    try
                     {
                         if (current_reply)
                         {
@@ -249,10 +244,21 @@ namespace VWParty.Infra.Messaging.Core
                                 basicProperties: replyProps,
                                 body: responseBytes);
                         }
-                    
+
                         channel.BasicAck(
                             deliveryTag: result.DeliveryTag,
                              multiple: false);
+                    }
+                    catch(Exception ex)
+                    {
+                        // connection fail while return message or ack.
+                        // just shutdown and ignore it. non-return ack will be ignore, message will retry in next time
+                        this._stop = true;
+                        this._is_restart = true;
+                        _logger.Warn(ex, "dequeue exception, restart subscriber...");
+
+                        result = null;
+                        break;
                     }
                 }
 

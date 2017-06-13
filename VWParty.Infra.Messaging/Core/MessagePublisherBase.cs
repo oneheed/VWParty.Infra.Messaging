@@ -127,18 +127,18 @@ namespace VWParty.Infra.Messaging.Core
             //while(retry_count > 0)
             while (true)
             {
-                using (var connection = MessageBusConfig.DefaultConnectionFactory.CreateConnection(cf.HostName.Split(',')))
-                using (var channel = connection.CreateModel())
+                try
                 {
-                    if (retry_count <= 0) throw new Exception("RetryLimitException");
-
-
-                    string replyQueueName = null;
-//                    QueueingBasicConsumer consumer = null;
-
-
-                    try
+                    using (var connection = MessageBusConfig.DefaultConnectionFactory.CreateConnection(cf.HostName.Split(',')))
+                    using (var channel = connection.CreateModel())
                     {
+                        if (retry_count <= 0) throw new Exception("RetryLimitException");
+
+
+                        string replyQueueName = null;
+                        //                    QueueingBasicConsumer consumer = null;
+
+
                         if (this.BusType == MessageBusTypeEnum.QUEUE)
                         {
                             channel.QueueDeclare(
@@ -178,22 +178,10 @@ namespace VWParty.Infra.Messaging.Core
 
 
 
-                    }
-                    //catch (TopologyRecoveryException ex)
-                    catch
-                    {
-                        // connection fail.
-                        _logger.Warn("Retry (left: {0}) ...", retry_count);
-                        Console.WriteLine("Retry..");
-                        retry_count--;
-                        await Task.Delay(retryWait);
-                        continue;
-                    }
 
 
 
-                    try
-                    {
+
                         IBasicProperties props = channel.CreateBasicProperties();
                         props.ContentType = "application/json";
                         props.Expiration = messageExpirationTimeout.TotalMilliseconds.ToString();
@@ -225,85 +213,96 @@ namespace VWParty.Infra.Messaging.Core
                         }
 
 
-
-                        //Console.WriteLine(logtracker.RequestId + JsonConvert.SerializeObject(message, Formatting.Indented));
-                        if (this.BusType == MessageBusTypeEnum.EXCHANGE)
+                        try
                         {
-                            channel.BasicPublish(
-                                exchange: this.ExchangeName ?? "",
-                                routingKey: routing,
-                                basicProperties: props,
-                                body: Encoding.Unicode.GetBytes(JsonConvert.SerializeObject(message)));
-                        }
-                        else if (this.BusType == MessageBusTypeEnum.QUEUE)
-                        {
-                            channel.BasicPublish(
-                                exchange: "",
-                                routingKey: this.QueueName,
-                                basicProperties: props,
-                                body: Encoding.Unicode.GetBytes(JsonConvert.SerializeObject(message)));
-                        }
-
-
-                        if (reply)
-                        {
-                            //BasicDeliverEventArgs ea;
-                            //if (consumer.Queue.Dequeue((int)waitReplyTimeout.TotalMilliseconds, out ea))
-                            //{
-                            //    // done, receive response message
-                            //    TOutputMessage response = JsonConvert.DeserializeObject<TOutputMessage>(Encoding.Unicode.GetString(ea.Body));
-
-                            //    //if (string.IsNullOrEmpty(response.exception) == false)
-                            //    //{
-                            //    //    throw new Exception("RPC Exception: " + response.exception);
-                            //    //}
-                            //    return response;
-                            //}
-                            //else
-                            //{
-                            //    // timeout, do not wait anymore
-                            //    throw new TimeoutException(string.Format(
-                            //        "MessageBus 沒有在訊息指定的時間內 ({0}) 收到 ResponseMessage 回覆。",
-                            //        messageExpirationTimeout));
-                            //}
-
-
-
-
-                            BasicGetResult result = null;
-                            DateTime until = DateTime.Now.Add(waitReplyTimeout);
-                            while (result == null && DateTime.Now < until)
+                            //Console.WriteLine(logtracker.RequestId + JsonConvert.SerializeObject(message, Formatting.Indented));
+                            if (this.BusType == MessageBusTypeEnum.EXCHANGE)
                             {
-                                result = channel.BasicGet(replyQueueName, true);
-                                if (result == null) Task.Delay(MessageBusConfig.DefaultPullWaitTime).Wait();
+                                channel.BasicPublish(
+                                    exchange: this.ExchangeName ?? "",
+                                    routingKey: routing,
+                                    basicProperties: props,
+                                    body: Encoding.Unicode.GetBytes(JsonConvert.SerializeObject(message)));
+                            }
+                            else if (this.BusType == MessageBusTypeEnum.QUEUE)
+                            {
+                                channel.BasicPublish(
+                                    exchange: "",
+                                    routingKey: this.QueueName,
+                                    basicProperties: props,
+                                    body: Encoding.Unicode.GetBytes(JsonConvert.SerializeObject(message)));
                             }
 
-                            if (result != null)
-                            {
-                                // done, receive response message
-                                TOutputMessage response = JsonConvert.DeserializeObject<TOutputMessage>(Encoding.Unicode.GetString(result.Body));
 
-                                return response;
-                            }
-                            else
+                            if (reply)
                             {
-                                // timeout, do not wait anymore
-                                throw new TimeoutException(string.Format(
-                                    "MessageBus 沒有在訊息指定的時間內 ({0}) 收到 ResponseMessage 回覆。",
-                                    waitReplyTimeout));
+                                //BasicDeliverEventArgs ea;
+                                //if (consumer.Queue.Dequeue((int)waitReplyTimeout.TotalMilliseconds, out ea))
+                                //{
+                                //    // done, receive response message
+                                //    TOutputMessage response = JsonConvert.DeserializeObject<TOutputMessage>(Encoding.Unicode.GetString(ea.Body));
+
+                                //    //if (string.IsNullOrEmpty(response.exception) == false)
+                                //    //{
+                                //    //    throw new Exception("RPC Exception: " + response.exception);
+                                //    //}
+                                //    return response;
+                                //}
+                                //else
+                                //{
+                                //    // timeout, do not wait anymore
+                                //    throw new TimeoutException(string.Format(
+                                //        "MessageBus 沒有在訊息指定的時間內 ({0}) 收到 ResponseMessage 回覆。",
+                                //        messageExpirationTimeout));
+                                //}
+
+
+
+
+                                BasicGetResult result = null;
+                                DateTime until = DateTime.Now.Add(waitReplyTimeout);
+                                while (result == null && DateTime.Now < until)
+                                {
+                                    result = channel.BasicGet(replyQueueName, true);
+                                    if (result == null) Task.Delay(MessageBusConfig.DefaultPullWaitTime).Wait();
+                                }
+
+                                if (result != null)
+                                {
+                                    // done, receive response message
+                                    TOutputMessage response = JsonConvert.DeserializeObject<TOutputMessage>(Encoding.Unicode.GetString(result.Body));
+
+                                    return response;
+                                }
+                                else
+                                {
+                                    // timeout, do not wait anymore
+                                    throw new TimeoutException(string.Format(
+                                        "MessageBus 沒有在訊息指定的時間內 ({0}) 收到 ResponseMessage 回覆。",
+                                        waitReplyTimeout));
+                                }
+                            }
+
+                            break;
+                        }
+                        finally
+                        {
+                            if (reply && string.IsNullOrEmpty(replyQueueName) == false)
+                            {
+                                channel.QueueDelete(replyQueueName);
                             }
                         }
 
-                        break;
                     }
-                    finally
-                    {
-                        if (reply && string.IsNullOrEmpty(replyQueueName) == false)
-                        {
-                            channel.QueueDelete(replyQueueName);
-                        }
-                    }
-
+                }
+                catch
+                {
+                    // connection fail.
+                    _logger.Warn("Retry (left: {0}) ...", retry_count);
+                    Console.WriteLine("Retry..");
+                    retry_count--;
+                    await Task.Delay(retryWait);
+                    continue;
                 }
             }
             return null;
