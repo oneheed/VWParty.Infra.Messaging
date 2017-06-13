@@ -42,14 +42,25 @@ namespace VWParty.Infra.Messaging.Core
         private bool _is_restart = false;
 
 
+        [Obsolete]
         public virtual void StartWorkers(SubscriberProcess process)
         {
             this.StartWorkersAsync(process, 1).Wait();
         }
 
+        [Obsolete]
         public virtual void StartWorkers(SubscriberProcess process, int worker_count)
         {
             this.StartWorkersAsync(process, worker_count).Wait();
+        }
+
+        public virtual async Task StartWorkersAsync(SubscriberProcess process)
+        {
+            await this.StartWorkersAsync(
+                process,
+                1,
+                MessageBusConfig.DefaultRetryCount,
+                MessageBusConfig.DefaultRetryWaitTime);
         }
 
         public virtual async Task StartWorkersAsync(SubscriberProcess process, int worker_count)
@@ -67,7 +78,7 @@ namespace VWParty.Infra.Messaging.Core
 
         public virtual async Task StartWorkersAsync(SubscriberProcess process, int worker_count, int retry_count, TimeSpan retry_timeout)
         {
-            lock (this._sync_root)
+//            lock (this._sync_root)
             {
                 if (this._worker_running) throw new InvalidOperationException("worker already started.");
                 this._worker_running = true;
@@ -76,18 +87,39 @@ namespace VWParty.Infra.Messaging.Core
             while (retry_count > 0)
             {
                 ConnectionFactory cf = MessageBusConfig.DefaultConnectionFactory;
-                this._connection = MessageBusConfig.DefaultConnectionFactory.CreateConnection(cf.HostName.Split(','));
 
-                _stop = false;
-                _is_restart = false;
-                Task[] tasks = new Task[worker_count];
-
-                for (int index = 0; index < worker_count; index++)
+                try
                 {
-                    tasks[index] = Task.Run(() => { this.StartProcessSubscribedMessage(process); });
+                    this._connection = MessageBusConfig.DefaultConnectionFactory.CreateConnection(cf.HostName.Split(','));
+                }
+                catch
+                {
+                    retry_count--;
+                    _logger.Warn("connection create fail. restarting...");
+                    await Task.Delay(retry_timeout);
+                    continue;
                 }
 
-                foreach(Task t in tasks) await t;
+
+                try
+                {
+                    _stop = false;
+                    _is_restart = false;
+                    Task[] tasks = new Task[worker_count];
+
+                    for (int index = 0; index < worker_count; index++)
+                    {
+                        tasks[index] = Task.Run(() => { this.StartProcessSubscribedMessage(process); });
+                    }
+
+                    foreach (Task t in tasks) await t;
+                }
+                catch(Exception ex)
+                {
+                    _logger.Warn(ex, "waiting task(s) exception. shutdown and retry...");
+                    this._is_restart = true;
+                    this._stop = true;
+                }
 
                 if (this._is_restart == false) break;
                 retry_count--;

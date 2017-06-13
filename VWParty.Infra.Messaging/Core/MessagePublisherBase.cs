@@ -117,7 +117,7 @@ namespace VWParty.Infra.Messaging.Core
             LogTrackerContext logtracker)
         {
 
-            //bool is_sent_complete = false;
+            bool is_sent_complete = false;
             //bool is_receive_complete = false;
             //string correlationId = Guid.NewGuid().ToString("N");
 
@@ -132,7 +132,11 @@ namespace VWParty.Infra.Messaging.Core
                     using (var connection = MessageBusConfig.DefaultConnectionFactory.CreateConnection(cf.HostName.Split(',')))
                     using (var channel = connection.CreateModel())
                     {
-                        if (retry_count <= 0) throw new Exception("RetryLimitException");
+                        if (retry_count <= 0)
+                        {
+                            // 已經超出最大的重新連線嘗試次數。
+                            throw new Exception("RetryLimitException");
+                        }
 
 
                         string replyQueueName = null;
@@ -176,12 +180,6 @@ namespace VWParty.Infra.Messaging.Core
 
 
 
-
-
-
-
-
-
                         IBasicProperties props = channel.CreateBasicProperties();
                         props.ContentType = "application/json";
                         props.Expiration = messageExpirationTimeout.TotalMilliseconds.ToString();
@@ -202,8 +200,6 @@ namespace VWParty.Infra.Messaging.Core
                                 logtracker.RequestStartTimeUTC_Text//Encoding.Unicode.GetBytes(logtracker.RequestStartTimeUTC_Text)
                             }
                         };
-                        //props.Headers.Add(LogTrackerContext._KEY_REQUEST_ID, logtracker.RequestId);
-                        //props.Headers.Add(LogTrackerContext._KEY_REQUEST_START_UTCTIME, logtracker.RequestStartTimeUTC_Text);
 
                         if (reply)
                         {
@@ -215,7 +211,6 @@ namespace VWParty.Infra.Messaging.Core
 
                         try
                         {
-                            //Console.WriteLine(logtracker.RequestId + JsonConvert.SerializeObject(message, Formatting.Indented));
                             if (this.BusType == MessageBusTypeEnum.EXCHANGE)
                             {
                                 channel.BasicPublish(
@@ -232,33 +227,11 @@ namespace VWParty.Infra.Messaging.Core
                                     basicProperties: props,
                                     body: Encoding.Unicode.GetBytes(JsonConvert.SerializeObject(message)));
                             }
+                            is_sent_complete = true;
 
 
                             if (reply)
                             {
-                                //BasicDeliverEventArgs ea;
-                                //if (consumer.Queue.Dequeue((int)waitReplyTimeout.TotalMilliseconds, out ea))
-                                //{
-                                //    // done, receive response message
-                                //    TOutputMessage response = JsonConvert.DeserializeObject<TOutputMessage>(Encoding.Unicode.GetString(ea.Body));
-
-                                //    //if (string.IsNullOrEmpty(response.exception) == false)
-                                //    //{
-                                //    //    throw new Exception("RPC Exception: " + response.exception);
-                                //    //}
-                                //    return response;
-                                //}
-                                //else
-                                //{
-                                //    // timeout, do not wait anymore
-                                //    throw new TimeoutException(string.Format(
-                                //        "MessageBus 沒有在訊息指定的時間內 ({0}) 收到 ResponseMessage 回覆。",
-                                //        messageExpirationTimeout));
-                                //}
-
-
-
-
                                 BasicGetResult result = null;
                                 DateTime until = DateTime.Now.Add(waitReplyTimeout);
                                 while (result == null && DateTime.Now < until)
@@ -297,6 +270,10 @@ namespace VWParty.Infra.Messaging.Core
                 }
                 catch
                 {
+                    // 如果訊息已經成功送出，只是在等待 response 時發生連線錯誤，則不會進行 Retry, 會原封不動地把 exception 丟回給呼叫端。
+                    // 由呼叫端決定該如何進行下一個步驟。
+                    if (is_sent_complete) throw;
+
                     // connection fail.
                     _logger.Warn("Retry (left: {0}) ...", retry_count);
                     Console.WriteLine("Retry..");
@@ -305,6 +282,8 @@ namespace VWParty.Infra.Messaging.Core
                     continue;
                 }
             }
+
+
             return null;
         }
 
