@@ -26,7 +26,7 @@ namespace BetTransactions.Client
             timer.Start();
             for (int i = 1; i <= 1000000; i++)
             {
-                Task.Delay(300).Wait();
+                //Task.Delay(300).Wait();
                 bus.PublishMessage("letou", new BetTransactionMessage()
                 {
                     Id = string.Format("{0}-{1}", i, Guid.NewGuid())

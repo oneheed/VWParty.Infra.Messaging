@@ -106,6 +106,14 @@ namespace VWParty.Infra.Messaging.Core
         //}
 
 
+        protected virtual string ConnectionName {
+            get
+            {
+                return this.GetType().FullName;
+            }
+        }
+
+
         protected virtual async Task<TOutputMessage> PublishAndWaitResponseMessageAsync(
             bool reply,
             TimeSpan waitReplyTimeout,
@@ -127,21 +135,18 @@ namespace VWParty.Infra.Messaging.Core
             //while(retry_count > 0)
             while (true)
             {
+                if (retry_count <= 0)
+                {
+                    // 已經超出最大的重新連線嘗試次數。
+                    throw new Exception("RetryLimitException");
+                }
+
                 try
                 {
-                    using (var connection = MessageBusConfig.DefaultConnectionFactory.CreateConnection(cf.HostName.Split(',')))
+                    using (var connection = MessageBusConfig.DefaultConnectionFactory.CreateConnection(cf.HostName.Split(','), this.ConnectionName))
                     using (var channel = connection.CreateModel())
                     {
-                        if (retry_count <= 0)
-                        {
-                            // 已經超出最大的重新連線嘗試次數。
-                            throw new Exception("RetryLimitException");
-                        }
-
-
                         string replyQueueName = null;
-                        //                    QueueingBasicConsumer consumer = null;
-
 
                         if (this.BusType == MessageBusTypeEnum.QUEUE)
                         {
@@ -229,7 +234,6 @@ namespace VWParty.Infra.Messaging.Core
                             }
                             is_sent_complete = true;
 
-
                             if (reply)
                             {
                                 BasicGetResult result = null;
@@ -268,18 +272,22 @@ namespace VWParty.Infra.Messaging.Core
 
                     }
                 }
-                catch
+                catch(Exception ex)
                 {
                     // 如果訊息已經成功送出，只是在等待 response 時發生連線錯誤，則不會進行 Retry, 會原封不動地把 exception 丟回給呼叫端。
                     // 由呼叫端決定該如何進行下一個步驟。
                     if (is_sent_complete) throw;
 
                     // connection fail.
-                    _logger.Warn("Retry (left: {0}) ...", retry_count);
-                    Console.WriteLine("Retry..");
+                    _logger.Warn(ex, "Retry (left: {0}) ...", retry_count);
+                    //Console.WriteLine("Retry..");
                     retry_count--;
                     await Task.Delay(retryWait);
                     continue;
+                }
+                finally
+                {
+                    
                 }
             }
 

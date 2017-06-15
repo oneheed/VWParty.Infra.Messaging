@@ -32,6 +32,13 @@ namespace VWParty.Infra.Messaging.Core
 
         public delegate TOutputMessage SubscriberProcess(TInputMessage message, LogTrackerContext logtracker);
 
+        protected virtual string ConnectionName
+        {
+            get
+            {
+                return this.GetType().FullName;
+            }
+        }
 
         [Obsolete]
         private Task[] running_worker_tasks = null;
@@ -84,13 +91,13 @@ namespace VWParty.Infra.Messaging.Core
                 this._worker_running = true;
             }
 
+            ConnectionFactory cf = MessageBusConfig.DefaultConnectionFactory;
+
             while (retry_count > 0)
             {
-                ConnectionFactory cf = MessageBusConfig.DefaultConnectionFactory;
-
                 try
                 {
-                    this._connection = MessageBusConfig.DefaultConnectionFactory.CreateConnection(cf.HostName.Split(','));
+                    this._connection = MessageBusConfig.DefaultConnectionFactory.CreateConnection(cf.HostName.Split(','), this.ConnectionName);
                 }
                 catch
                 {
@@ -99,7 +106,6 @@ namespace VWParty.Infra.Messaging.Core
                     await Task.Delay(retry_timeout);
                     continue;
                 }
-
 
                 try
                 {
@@ -132,7 +138,7 @@ namespace VWParty.Infra.Messaging.Core
                 this._worker_running = false;
             }
 
-            if (this._is_restart && retry_count == 0) throw new Exception("retry count limit");
+            if (this._is_restart && retry_count == 0) throw new Exception("Retry 次數已超過，不再重新嘗試連線。");
         }
 
 
