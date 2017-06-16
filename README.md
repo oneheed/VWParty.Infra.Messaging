@@ -1,4 +1,172 @@
 [![build status](https://gitlab.66.net/msa/VWParty.Infra.Messaging/badges/develop/build.svg)](https://gitlab.66.net/msa/VWParty.Infra.Messaging/commits/develop) (branch: develop)
+----
+
+# VWParty.Infra.Messaging SDK 使用說明
+
+目前我們底層採用的訊息平台是 RabbitMQ, 他提供幾種基礎的元件，可以讓我們來規畫整套系統的資訊流。
+簡單介紹我們常用的元件:
+
+1. Queue:
+實際的Queue可以儲存訊息。訊息被放進去 (publish) queue 會按照先後順序排隊。等待著被另一端按照順序
+一個一個取出處理。取出的 message 處理完之後必須回報是否處理成功 (ack), 若沒有回報就斷線，或是超出
+預期時間，則這筆 message 會重新回到 queue 內重新發送。
+
+1. Exchange:
+Exchange任務就像郵差，只負責分派 message。Exchange接收到message後，會根據routing key來決定要轉發
+到哪裡。轉發的目的地可能是另一個 exchange 或是 queue。隨著不同的 exchange / queue 的組態設定不同,
+訊息可能同時被分派到多個 queue, 也有可能直接被丟棄。
+
+
+# SDK 處理那些問題?
+
+要存取 RabbitMQ, 其實官方就已經提供 .NET 版本的 SDK 了 (RabbitMQ.Client)，這份 SDK 的主要目的是
+簡化我們內部使用 RabbitMQ 的進入門檻。我把使用的方式分為兩大類:
+
+1. 單向傳遞: 發送端送出訊息後 **不需要** 等待回應
+2. 雙向傳遞: 發送端送出訊息後 **要** 等待回應
+
+每一種應用，又分為發送端 (Client) 與接受訊息的處理端 (Server)。因此 SDK 有四個主要的類別，是開發人員
+必須留意的:
+
+1. (單向) 發送端: ```class MessageClientBase```
+2. (單向) 接收端: ```class MessageServerBase```
+3. (雙向) 發送端: ```class RpcClientBase```
+4. (雙向) 接收端: ```class RpcServerBase```
+
+
+# 單向處理範例 MessageClientBase / MessageServerBase
+
+用於傳遞訊息後就不須理會他的狀況。發送端送完訊息，確認訊息成功進入 queue 後就可以離開，繼續做
+其他任務了。訊息會留在 queue 之中等待被領取處理。
+
+## RabbitMQ 設定
+
+標準做法是 RabbitMQ 建立 Exchange 負責接收 message, MessageClientBase 就負責把訊息推送到 Exchange 的任務。
+在 RabbitMQ Exchange 上面定義 routing 機制來決定該如何把 message 分派到 queue，MessageServerBase 則負責如何
+處理送來的 message。
+
+此案例中，我們建立一個 Exchange:
+- name: "tp-transaction"
+- type: "direct"
+
+同時建立一組 Queue:
+- name: "bet-test"
+
+接著把 Queue 綁定 (bind) 到 exchange:
+- routing key: "letou"
+
+之後只要補上負責傳送與接收訊息的程式碼就可以運作了。
+
+
+## 發送端的程式碼 (衍生自: MessageClientBase)
+
+按照 SDK 的規格，你需要定義一個自己的 Client, 做法是:
+
+1. 定義訊息類別 (例如: ```class BetTransactionMessage```), 需繼承自 ```InputMessageBase```
+2. 定義新類別 (例如: ```BetMessageClient```)，繼承自 ```MessageClientBase<BetTransactionMessage>```
+3. 定義 public 的 constructor (例如: ```public BetMessageClient() : base("tp-transaction", "direct") { }```)
+
+完整範例程式碼如下:
+
+BetTransactionMessage.cs
+```csharp
+    public class BetTransactionMessage : InputMessageBase
+    {
+        // key fields
+        public string Id { get; set; }
+        public string BrandId { get; set; }
+        public string PlatformCode { get; set; }
+        public string GameId { get; set; }
+        public string AccountId { get; set; }
+        public string BetId { get; set; }
+        public string TransactionNumber { get; set; }
+        public string RoundId { get; set; }
+
+        // content fields
+        public decimal TransactionAmoung { get; set; }
+        public DateTime TransactionDateTime { get; set; }
+        public BetTransactionTypeEnum TransactionType { get; set; }
+        public bool IsTransactionFinished { get; set; }
+
+
+        // property fields
+        public string RawRequestJson { get; set; }
+        public DateTime CreateTime { get; set; }
+    }
+```
+
+BetMessageClient.cs
+```csharp
+    public class BetMessageClient : MessageClientBase<BetTransactionMessage>
+    {
+        public BetMessageClient() : base("tp-transaction", "direct")
+        {
+
+        }
+    }
+```
+
+
+使用時的程式碼:
+```csharp
+
+BetMessageClient bmc = new BetRpcClient();
+BetTransactionMessage btm = new BetTransactionMessage()
+{
+	Id = string.Format("{0}-{1}", i, Guid.NewGuid())
+};
+bmc.PublishAsync("letou", btm).Wait();
+
+```
+
+按照上述過程，就可以成功地發送訊息到 RabbitMQ Exchange (tp-transaction)。若有給定正確的 routing key, 則訊息會成功的被送到指定的 Queue (bet-test)。
+
+
+
+## 處理端的程式碼 (衍生自: MessageServerBase)
+
+
+
+
+
+# 雙向處理範例 RpcClientBase / RpcServerBase
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# 其他舊的文件內容 (以下請忽略)
+
 
 # RabbitMQ Toturials
 
