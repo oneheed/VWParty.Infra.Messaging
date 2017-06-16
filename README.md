@@ -1,6 +1,29 @@
 [![build status](https://gitlab.66.net/msa/VWParty.Infra.Messaging/badges/develop/build.svg)](https://gitlab.66.net/msa/VWParty.Infra.Messaging/commits/develop) (branch: develop)
 ----
 
+# 如何透過 NuGet 取得這個套件?
+
+套件的發行都透過公司的 NuGet server 進行。這個專案也已正確設定好 CI / CD 流程。只要程式碼推送 (push)
+到 GitLab 就會觸發 CI-Runner, 自動編譯及打包套件，推送到 NuGet server.
+
+公司的 NuGet Server URL:
+
+develop branch: 自動發行 BETA 版本 (pre-release)
+master branch:  自動發行正式版 (release)
+
+
+如何取得最新版 (release)
+```powershell
+install-package VWParty.Infra.Messaging
+```
+
+如何取得最新版 (pre-release, beta)
+```powershell
+install-package VWParty.Infra.Messaging -pre
+```
+
+
+
 # VWParty.Infra.Messaging SDK 使用說明
 
 目前我們底層採用的訊息平台是 RabbitMQ, 他提供幾種基礎的元件，可以讓我們來規畫整套系統的資訊流。
@@ -110,12 +133,12 @@ BetMessageClient.cs
 使用時的程式碼:
 ```csharp
 
-BetMessageClient bmc = new BetRpcClient();
-BetTransactionMessage btm = new BetTransactionMessage()
-{
-	Id = string.Format("{0}-{1}", i, Guid.NewGuid())
-};
-bmc.PublishAsync("letou", btm).Wait();
+	BetMessageClient bmc = new BetRpcClient();
+	BetTransactionMessage btm = new BetTransactionMessage()
+	{
+		Id = string.Format("{0}-{1}", i, Guid.NewGuid())
+	};
+	bmc.PublishAsync("letou", btm).Wait();
 
 ```
 
@@ -123,7 +146,80 @@ bmc.PublishAsync("letou", btm).Wait();
 
 
 
+
+
 ## 處理端的程式碼 (衍生自: MessageServerBase)
+
+
+按照 SDK 的規格，你需要定義一個自己的 Server, 做法是:
+
+1. 定義訊息類別 (例如: ```class BetTransactionMessage```), 需繼承自 ```InputMessageBase```
+這部分需與前面發送端的定義一至。最佳做法是放到同一個 library 引用他。
+2. 定義新類別 (例如: ```BetMessageServer```)，繼承自 ```MessageServerBase<BetTransactionMessage>```
+3. 定義 public 的 constructor (例如: ```public BetMessageServer() : base("bet-test") { }```)
+
+完整範例程式碼如下:
+
+BetTransactionMessage.cs (同上，略)
+
+
+BetMessageServer.cs
+```csharp
+    public class BetMessageServer: MessageServerBase<BetTransactionMessage>
+    {
+        public BetMessageServer() : base("bet-test")
+        {
+
+        }
+        protected override void ExecuteSubscriberProcess(BetTransactionMessage message, LogTrackerContext logtracker)
+        {
+			 // do something...
+            return;
+        }
+    }
+```
+
+其中 ExecuteSubscriberProcess( ) 的內容，就是接收到訊息時要做的動作。請示情況填入正確的程式碼。
+
+
+
+
+使用時的程式碼:
+```csharp
+
+    using (BetMessageServer bms = new BetMessageServer())
+    {
+        var x = brs.StartWorkersAsync(10);
+
+        Console.WriteLine("PRESS [ENTER] To Exit...");
+        Console.ReadLine();
+
+        bms.StopWorkers();
+        x.Wait();
+
+        Console.WriteLine("Shutdown complete.");
+    }
+
+```
+
+使用時的程式碼稍作解釋:
+
+1. 建立 ```BetMessageServer``` 物件
+2. 啟動 Server, 我們可以指定 Server 要開啟幾個 threads 來處理。啟動請呼叫 ```StartWorkersAsync()```, 他是非同步呼叫。Stop 後才會 await 到結果。
+3. 若要中止 Server, 請呼叫 ```StopWorkers()```, 他會觸發正常中止的程序，處理到的任務會繼續完成，但是不會在處理新任務。全部結束後 StartWorkersAsync().Wait() 就會 RETURN。
+
+如此按照這範例就可以簡單且高效率的處理 message
+
+
+
+
+
+
+
+
+
+
+
 
 
 

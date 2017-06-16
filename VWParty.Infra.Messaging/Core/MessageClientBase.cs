@@ -12,13 +12,13 @@ namespace VWParty.Infra.Messaging.Core
         protected MessageClientBase(string exchangeName, string exchangeType)
             : base(exchangeName, exchangeType)
         {
-            this.IsWaitReturn = true;
+            this.IsWaitReturn = false;
         }
 
         protected MessageClientBase(string queueName)
             : base(queueName)
         {
-            this.IsWaitReturn = true;
+            this.IsWaitReturn = false;
         }
         
         public async Task PublishAsync(string routing, TInputMessage message)

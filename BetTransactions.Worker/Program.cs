@@ -17,7 +17,8 @@ namespace BetTransactions.Worker
 
         static void Main(string[] args)
         {
-            using (BetRpcServer brs = new BetRpcServer("bet_test"))
+            //using (BetRpcServer brs = new BetRpcServer())
+            using (BetMessageServer brs = new BetMessageServer())
             {
                 var x = brs.StartWorkersAsync(10);
 
@@ -66,7 +67,7 @@ namespace BetTransactions.Worker
 
     public class BetRpcServer: RpcServerBase<BetTransactionMessage, OutputMessageBase>
     {
-        public BetRpcServer(string queueName) : base(queueName)
+        public BetRpcServer() : base("bet-test")
         {
 
         }
@@ -76,9 +77,24 @@ namespace BetTransactions.Worker
         protected override OutputMessageBase ExecuteSubscriberProcess(BetTransactionMessage message, LogTrackerContext logtracker)
         {
             LogTrackerContext.Init(LogTrackerContextStorageTypeEnum.THREAD_DATASLOT, logtracker);
-            //Console.WriteLine("[{0:00}] {1} ...", Thread.CurrentThread.ManagedThreadId, bm.Id);
             _logger.Info(message.Id);
             return new VWParty.Infra.Messaging.Core.OutputMessageBase();
+        }
+    }
+
+    public class BetMessageServer: MessageServerBase<BetTransactionMessage>
+    {
+        public BetMessageServer() : base("bet_test")
+        {
+
+        }
+        Logger _logger = LogManager.GetCurrentClassLogger();
+        protected override void ExecuteSubscriberProcess(BetTransactionMessage message, LogTrackerContext logtracker)
+        {
+            LogTrackerContext.Init(LogTrackerContextStorageTypeEnum.THREAD_DATASLOT, logtracker);
+            _logger.Info(message.Id);
+            Console.WriteLine(message.Id);
+            return;
         }
     }
 }
