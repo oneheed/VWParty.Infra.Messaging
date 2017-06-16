@@ -13,4 +13,6 @@ namespace VWParty.Infra.Messaging.Core
         public string correlationId { get; set; }
         public string exception { get; set; }
     }
+
+    public sealed class DummyOutputMessage : OutputMessageBase { }
 }

@@ -25,7 +25,7 @@ namespace VWParty.Infra.Messaging.Core
     {
         private static Logger _logger = LogManager.GetCurrentClassLogger();
 
-        public bool IsWaitReturn { get; set; }
+        internal bool IsWaitReturn { get; set; }
 
         //internal string MessageBusConfigName { get; set; }
         internal string ExchangeName { get; set; }
@@ -52,61 +52,8 @@ namespace VWParty.Infra.Messaging.Core
         }
 
 
-
-        public virtual void PublishMessage(string routing, TInputMessage message)
+        protected virtual string ConnectionName
         {
-            this.PublishAndWaitResponseMessageAsync(
-                this.IsWaitReturn,
-                TimeSpan.FromSeconds(15),
-                TimeSpan.FromMinutes(30),
-                routing,
-                message,
-                MessageBusConfig.DefaultRetryCount,
-                MessageBusConfig.DefaultRetryWaitTime,
-                LogTrackerContext.Current).Wait();
-        }
-
-
-        //protected async Task<TOutputMessage> PublishAndWaitResponseMessageAsync(
-        //    bool reply,
-        //    TimeSpan waitReplyTimeout,
-        //    TimeSpan messageExpirationTimeout,
-        //    string routing,
-        //    TInputMessage message)
-        //{
-        //    return await Task.Run<TOutputMessage>(() =>
-        //    {
-        //        return this.PublishAndWaitResponseMessage(
-        //            reply, 
-        //            waitReplyTimeout, 
-        //            messageExpirationTimeout, 
-        //            routing, 
-        //            message,
-        //            3,
-        //            TimeSpan.FromSeconds(3));
-        //    });
-        //}
-        //protected virtual async Task<TOutputMessage> PublishAndWaitResponseMessageAsync(
-        //    bool reply,
-        //    TimeSpan waitReplyTimeout,
-        //    TimeSpan messageExpirationTimeout,
-        //    string routing,
-        //    TInputMessage message)
-        //{
-
-        //    return await this.PublishAndWaitResponseMessageAsync(
-        //        reply,
-        //        waitReplyTimeout,
-        //        messageExpirationTimeout,
-        //        routing,
-        //        message,
-        //        MessageBusConfig.DefaultRetryCount,
-        //        MessageBusConfig.DefaultRetryWaitTime);
-
-        //}
-
-
-        protected virtual string ConnectionName {
             get
             {
                 return this.GetType().FullName;
@@ -114,7 +61,22 @@ namespace VWParty.Infra.Messaging.Core
         }
 
 
-        protected virtual async Task<TOutputMessage> PublishAndWaitResponseMessageAsync(
+        protected virtual async Task<TOutputMessage> PublishMessageAsync(string routing, TInputMessage message)
+        {
+            return await this.PublishMessageAsync(
+                this.IsWaitReturn,
+                TimeSpan.FromSeconds(15),
+                TimeSpan.FromMinutes(30),
+                routing,
+                message,
+                MessageBusConfig.DefaultRetryCount,
+                MessageBusConfig.DefaultRetryWaitTime,
+                LogTrackerContext.Current);
+        }
+        
+
+
+        protected virtual async Task<TOutputMessage> PublishMessageAsync(
             bool reply,
             TimeSpan waitReplyTimeout,
             TimeSpan messageExpirationTimeout,

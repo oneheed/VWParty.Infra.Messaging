@@ -5,64 +5,39 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using VWParty.Infra.LogTracking;
+using VWParty.Infra.Messaging.Core;
 using VWParty.Infra.Messaging.RPCWorkers;
 
 namespace Zeus.Messaging.Worker
 {
     class Program
     {
+        static POCWorker poc = null;
+
         // usage: Worker [worker count]
         static void Main(string[] args)
         {
-            //DIRECT=TCP:157.34.104.22\MyQueue
-            using (WorkerQueue wq = new WorkerQueue("rpc_test"))
+            Console.WriteLine("Press [ENTER] to exit...");
+
+            using (poc = new POCWorker())
             {
-                // ConfigurationManager.ConnectionStrings["queues.data"].ConnectionString);
-                int count = 0;
+                var x = poc.StartWorkersAsync(10);
 
-                WorkerQueue.WorkerProcess proc = (request) =>
+                int period = 1000 * 5; // 每 5 sec 偵測一次 ENTER，同時統計已處理的 message 數量
+                while(Console.KeyAvailable == false && x.Wait(period) == false)
                 {
-                    Interlocked.Increment(ref count);
-                    Console.Write(" (thread: {0}) ", Thread.CurrentThread.ManagedThreadId);
-                    return new ResponseMessage()
-                    {
-                        result_json = request.input_json
-                    };
-                };
+                    Console.WriteLine("total call in current period: {0}, process speed: {1:0.00} call/sec", poc.count, poc.count * 1000.0 / period);
+                    poc.count = 0;
+                }
 
-                //int worker_count = 1;
-                //if (args.Length > 0) worker_count = int.Parse(args[0]);
-                //for(int i = 0; i < worker_count; i++) wq.StartAsync(proc);
-
-
-                bool stop = false;
-                Task statistic_task = Task.Factory.StartNew(() =>
-                {
-                    TimeSpan period = TimeSpan.FromSeconds(10);
-                    while (stop == false)
-                    {
-                        count = 0;
-
-                        Task.Delay(period).Wait();
-                        Console.WriteLine();
-                        Console.WriteLine($"處理速度: {count / period.TotalSeconds} requests/sec");
-                    }
-                });
-
-                wq.StartWorkers(proc, 10);
-
-                Console.WriteLine("Press [ENTER] to quit...");
-                Console.ReadLine();
-
-                Console.Write("Shutdown Worker...");
-                wq.Stop();
-                Console.WriteLine("OK (worker)");
-
-                Console.Write("Shutdown Statistic Task...");
-                stop = true;
-                statistic_task.Wait();
-                Console.WriteLine("OK (statistic)");
+                poc.StopWorkers();
+                Console.WriteLine("shutdown worker...");
+                x.Wait();
+                Console.WriteLine("shutdown worker complete.");
             }
         }
+        
     }
+
 }

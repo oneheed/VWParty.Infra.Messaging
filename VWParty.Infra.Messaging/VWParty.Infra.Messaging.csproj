@@ -66,9 +66,13 @@
     <Compile Include="BetTransactions\BetTransactionTypeEnum.cs" />
     <Compile Include="Core\InputMessageBase.cs" />
     <Compile Include="Core\MessageBusTypeEnum.cs" />
+    <Compile Include="Core\MessageClientBase.cs" />
     <Compile Include="Core\MessagePublisherBase.cs" />
+    <Compile Include="Core\MessageServerBase.cs" />
     <Compile Include="Core\MessageSubscriberBase.cs" />
     <Compile Include="Core\OutputMessageBase.cs" />
+    <Compile Include="Core\RpcClientBase.cs" />
+    <Compile Include="Core\RpcServerBase.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="MessageBusConfig.cs" />
     <Compile Include="RPCWorkers\RequestMessage.cs" />

@@ -40,7 +40,7 @@ namespace Zeus.Messaging.Client
                     try
                     {
                         Console.Write("* Call Remote ({0})...", request.input_json);
-                        ResponseMessage response = wq.CallWorkerProcess(request);
+                        ResponseMessage response = wq.Call(null, request);
                         Console.WriteLine(", Receive Response: {0}", response.result_json);
                     }
                     catch(Exception ex)
