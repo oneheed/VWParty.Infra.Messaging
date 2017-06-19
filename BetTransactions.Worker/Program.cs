@@ -67,7 +67,7 @@ namespace BetTransactions.Worker
 
     public class BetRpcServer: RpcServerBase<BetTransactionMessage, OutputMessageBase>
     {
-        public BetRpcServer() : base("bet-test")
+        public BetRpcServer() : base("bet_test")
         {
 
         }

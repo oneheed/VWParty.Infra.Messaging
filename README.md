@@ -23,6 +23,34 @@ install-package VWParty.Infra.Messaging -pre
 ```
 
 
+# Solution 說明
+
+- /POC/BetTransactions.Client
+- /POC/BetTransactions.Worker
+
+> 使用 SDK 的程式碼範例。Client 是發送端，會不斷地發送訊息到 ```tp-transaction``` 這個 exchange, Worker 則是接收端
+> 的範例，會不斷地用 Pull API 從 ```bet_test``` 這個 queue 提取訊息出來處理，處理完畢會回應 return message & ack。  
+> 
+> Client 支援兩種模式: async (預設) / sync, 使用方式是 BetTransactions.Client.exe [async | sync], sync mode 會等待
+> Worker 回應的訊息，而 async mode 不會  
+> Worker 預設會建立 10 個執行續平行處理 message, 按下 ENTER 會啟用正常中止的程序 (會把處理到一半的 message 處理完才結束 Worker)。
+> 若需要調整執行緒數量，需要調整 source code
+
+
+/POC/RabbitMQ.POC
+
+> 直接使用 RabbitMQ.Client .NET SDK 的使用範例，參考用
+
+/POC/Zeus.Messaging.Client
+/POC/Zeus.Messaging.Worker
+
+> 舊版 (MSMQ) SDK 的使用範例，測試相容性用的 code. 同樣的 Client 是發送端，Worker 是接收處理端
+
+/VWParty.Infra.Messaging
+
+> SDK 本身的 project
+
+
 
 # VWParty.Infra.Messaging SDK 使用說明
 
