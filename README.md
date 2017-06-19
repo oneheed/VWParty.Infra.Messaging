@@ -25,6 +25,8 @@ install-package VWParty.Infra.Messaging -pre
 
 # Solution 說明
 
+這個 repository 包含一個 visual studio solution, 裡面的每個 project 用途說明如下:
+
 - /POC/BetTransactions.Client
 - /POC/BetTransactions.Worker
 
@@ -37,16 +39,16 @@ install-package VWParty.Infra.Messaging -pre
 > 若需要調整執行緒數量，需要調整 source code
 
 
-/POC/RabbitMQ.POC
+- /POC/RabbitMQ.POC
 
 > 直接使用 RabbitMQ.Client .NET SDK 的使用範例，參考用
 
-/POC/Zeus.Messaging.Client
-/POC/Zeus.Messaging.Worker
+- /POC/Zeus.Messaging.Client
+- /POC/Zeus.Messaging.Worker
 
 > 舊版 (MSMQ) SDK 的使用範例，測試相容性用的 code. 同樣的 Client 是發送端，Worker 是接收處理端
 
-/VWParty.Infra.Messaging
+- /VWParty.Infra.Messaging
 
 > SDK 本身的 project
 
