@@ -33,7 +33,7 @@ install-package VWParty.Infra.Messaging -pre
 > 使用 SDK 的程式碼範例。Client 是發送端，會不斷地發送訊息到 ```tp-transaction``` 這個 exchange, Worker 則是接收端
 > 的範例，會不斷地用 Pull API 從 ```bet_test``` 這個 queue 提取訊息出來處理，處理完畢會回應 return message & ack。  
 > 
-> Client 支援兩種模式: async (預設) / sync, 使用方式是 BetTransactions.Client.exe [async | sync], sync mode 會等待
+> Client 支援兩種模式: async (預設) / sync, 使用方式是 ```BetTransactions.Client.exe [async | sync]```, sync mode 會等待
 > Worker 回應的訊息，而 async mode 不會  
 > Worker 預設會建立 10 個執行續平行處理 message, 按下 ENTER 會啟用正常中止的程序 (會把處理到一半的 message 處理完才結束 Worker)。
 > 若需要調整執行緒數量，需要調整 source code
@@ -69,8 +69,6 @@ Exchange任務就像郵差，只負責分派 message。Exchange接收到message�
 到哪裡。轉發的目的地可能是另一個 exchange 或是 queue。隨著不同的 exchange / queue 的組態設定不同,
 訊息可能同時被分派到多個 queue, 也有可能直接被丟棄。
 
-
-# SDK 處理那些問題?
 
 要存取 RabbitMQ, 其實官方就已經提供 .NET 版本的 SDK 了 (RabbitMQ.Client)，這份 SDK 的主要目的是
 簡化我們內部使用 RabbitMQ 的進入門檻。我把使用的方式分為兩大類:
@@ -258,6 +256,7 @@ BetMessageServer.cs
 # 雙向處理範例 RpcClientBase / RpcServerBase
 
 
+(TBD)
 
 
 
@@ -286,8 +285,14 @@ BetMessageServer.cs
 
 
 
-
-
+----
+  
+  
+  
+  
+  
+  
+  
 
 
 
