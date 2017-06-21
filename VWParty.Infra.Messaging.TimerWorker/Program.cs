@@ -16,8 +16,7 @@ namespace VWParty.Infra.Messaging.TimerWorker
 
                 var worker = ts.StartWorkersAsync();
 
-                Console.WriteLine("Press [ENTER]...");
-                Console.ReadLine();
+                while (true) Task.Delay(100).Wait();    // infinity loop, 在 windows container 的 daemon mode 下, ReadLine() 會讀取 STDIN 失敗
 
                 ts.StopWorkers();
                 Console.WriteLine("stop workers...");
