@@ -25,6 +25,8 @@ namespace VWParty.Infra.Messaging.Core
 
         protected override void ExecuteSubscriberProcess(TimerMessage message, LogTrackerContext logtracker)
         {
+            _logger.Info("Add Timer Task: {0}, {1}, {2}", message.ID, message.RouteKey, message.RunAt);
+
             lock (schedule)
             {
                 this.schedule.Add(new MessagePack()
