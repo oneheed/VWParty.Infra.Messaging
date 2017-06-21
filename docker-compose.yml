@@ -1,0 +1,9 @@
+version: '2.1'
+services:
+  worker:
+    image: runner/taskscheduler_worker:latest
+
+networks:
+  default:
+    external:
+      name: nat

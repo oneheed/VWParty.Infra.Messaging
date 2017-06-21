@@ -21,3 +21,5 @@ develop_build_job:
   - '"c:\Program Files (x86)\MSBuild\14.0\Bin\amd64\MSBuild.exe" /p:Configuration=Release /p:Platform="Any CPU" VWParty.Infra.Messaging.sln'
   - c:\Multi-Runner\nuget.exe pack VWParty.Infra.Messaging\VWParty.Infra.Messaging.csproj -Properties Configuration=Release -Version %BUILD_VERSION%%BUILD_TARGET%
   - c:\Multi-Runner\nuget.exe push VWParty.Infra.Messaging.%BUILD_VERSION%%BUILD_TARGET%.nupkg -ApiKey %NUGET_APIKEY% -Source %NUGET_SERVER%
+  - docker build --no-cache --force-rm -t runner/taskscheduler_worker:latest -t runner/taskscheduler_worker:%BUILD_VERSION%%BUILD_TARGET% VWParty.Infra.Messaging.TimerWorker\bin\Release\
+  - docker-compose up -d --force-recreate
