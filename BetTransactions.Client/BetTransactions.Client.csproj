@@ -50,7 +50,7 @@
     <Reference Include="System.Net.Http" />
     <Reference Include="System.Xml" />
     <Reference Include="VWParty.Infra.LogTracking, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\VWParty.Infra.LogTracking.0.3.1-BETA\lib\net461\VWParty.Infra.LogTracking.dll</HintPath>
+      <HintPath>..\packages\VWParty.Infra.LogTracking.0.3.14\lib\net461\VWParty.Infra.LogTracking.dll</HintPath>
       <Private>True</Private>
     </Reference>
   </ItemGroup>

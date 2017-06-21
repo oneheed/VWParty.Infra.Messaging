@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using VWParty.Infra.LogTracking;
 
 namespace VWParty.Infra.Messaging.Core
 {
@@ -25,12 +26,12 @@ namespace VWParty.Infra.Messaging.Core
 
         public virtual TOutputMessage Call(string routing, TInputMessage message)
         {
-            return this.PublishMessageAsync(routing, message).Result;
+            return this.PublishMessageAsync(routing, message, LogTrackerContext.Current).Result;
         }
 
         public virtual async Task<TOutputMessage> CallAsync(string routing, TInputMessage message)
         {
-            return await this.PublishMessageAsync(routing, message);
+            return await this.PublishMessageAsync(routing, message, LogTrackerContext.Current);
         }
     }
 }

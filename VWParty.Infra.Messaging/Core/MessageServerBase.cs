@@ -7,12 +7,10 @@ using VWParty.Infra.LogTracking;
 
 namespace VWParty.Infra.Messaging.Core
 {
-    class MessageServerBase
-    {
-    }
+
 
     public abstract class MessageServerBase<TInputMessage> : MessageSubscriberBase<TInputMessage, DummyOutputMessage>
-    where TInputMessage : InputMessageBase
+        where TInputMessage : InputMessageBase
     {
         protected MessageServerBase(string queueName)
             : base(queueName)
@@ -41,10 +39,7 @@ namespace VWParty.Infra.Messaging.Core
         }
 
 
-        protected virtual void ExecuteSubscriberProcess(TInputMessage message, LogTrackerContext logtracker)
-        {
-            
-        }
+        protected abstract void ExecuteSubscriberProcess(TInputMessage message, LogTrackerContext logtracker);
 
     }
 }

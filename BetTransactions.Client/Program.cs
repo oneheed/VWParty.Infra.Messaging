@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using VWParty.Infra.LogTracking;
 using VWParty.Infra.Messaging.BetTransactions;
 using VWParty.Infra.Messaging.Core;
 
@@ -16,21 +17,30 @@ namespace BetTransactions.Client
 
         static void Main(string[] args)
         {
-            bool IsWaitReturn = (args.Length > 0 && args[0] == "sync");
-            Console.WriteLine("Start in {0} mode.", IsWaitReturn ? "SYNC" : "ASYNC");
+            string mode = (args.Length == 0) ? "ASYNC" : args[0].ToUpper();
+            Console.WriteLine("Start in {0} mode.", mode);
 
             BetMessageClient bmc = null;
             BetRpcClient brc = null;
-            if (IsWaitReturn == true)
+            BetTimerClient btc = null;
+
+            LogTrackerContext.Create("POC/BetTransactions.Client", LogTrackerContextStorageTypeEnum.THREAD_DATASLOT);
+
+            switch (mode)
             {
-                // sync mode
-                brc = new BetRpcClient();
+                case "ASYNC":
+                    bmc = new BetMessageClient();
+                    break;
+
+                case "SYNC":
+                    brc = new BetRpcClient();
+                    break;
+
+                case "TIMER":
+                    btc = new BetTimerClient();
+                    break;
             }
-            else
-            {
-                // async mode
-                bmc = new BetMessageClient();
-            }
+
 
             Stopwatch timer = new Stopwatch();
             timer.Start();
@@ -41,16 +51,23 @@ namespace BetTransactions.Client
                     Id = string.Format("{0}-{1}", i, Guid.NewGuid())
                 };
 
-                if (IsWaitReturn)
+                switch (mode)
                 {
-                    OutputMessageBase omb = brc.CallAsync("letou", btm).Result;
-                }
-                else
-                {
-                    bmc.PublishAsync("letou", btm).Wait();
-                }
+                    case "ASYNC":
+                        bmc.PublishAsync("letou", btm).Wait();
+                        break;
 
-                //Task.Delay(300).Wait();
+                    case "SYNC":
+                        OutputMessageBase omb = brc.CallAsync("letou", btm).Result;
+                        break;
+
+                    case "TIMER":
+                        btc.PublishAsync("letou", btm, TimeSpan.FromSeconds(5)).Wait();
+                        break;
+                }
+                
+
+                if (args.Length > 1 && args[1] == "delay") Task.Delay(300).Wait();
                 Console.Write('.');
 
                 if (i % 100 == 0)
@@ -60,9 +77,6 @@ namespace BetTransactions.Client
                     timer.Restart();
                 }
             }
-
-
-
         }
 
         /*
@@ -113,6 +127,14 @@ namespace BetTransactions.Client
     public class BetRpcClient : RpcClientBase<BetTransactionMessage, OutputMessageBase>
     {
         public BetRpcClient() : base("tp-transaction", "direct")
+        {
+
+        }
+    }
+
+    public class BetTimerClient : TimerClient<BetTransactionMessage>
+    {
+        public BetTimerClient() : base("tp-transaction", "direct")
         {
 
         }

@@ -56,7 +56,7 @@
     <Reference Include="System.Net.Http" />
     <Reference Include="System.Xml" />
     <Reference Include="VWParty.Infra.LogTracking, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\VWParty.Infra.LogTracking.0.3.1-BETA\lib\net461\VWParty.Infra.LogTracking.dll</HintPath>
+      <HintPath>..\packages\VWParty.Infra.LogTracking.0.3.14\lib\net461\VWParty.Infra.LogTracking.dll</HintPath>
       <Private>True</Private>
     </Reference>
   </ItemGroup>
@@ -73,6 +73,9 @@
     <Compile Include="Core\OutputMessageBase.cs" />
     <Compile Include="Core\RpcClientBase.cs" />
     <Compile Include="Core\RpcServerBase.cs" />
+    <Compile Include="Core\TimerClient.cs" />
+    <Compile Include="Core\TimerMessage.cs" />
+    <Compile Include="Core\TimerServer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="MessageBusConfig.cs" />
     <Compile Include="RPCWorkers\RequestMessage.cs" />

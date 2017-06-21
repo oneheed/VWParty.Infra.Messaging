@@ -233,7 +233,7 @@ namespace VWParty.Infra.Messaging.Core
                     if (props.Headers == null || props.Headers[LogTrackerContext._KEY_REQUEST_ID] == null)
                     {
                         // message without logtracker context info
-                        logtracker = LogTrackerContext.Init(LogTrackerContextStorageTypeEnum.NONE);
+                        logtracker = LogTrackerContext.Create(LogTrackerContextStorageTypeEnum.NONE);
                     }
                     else
                     {

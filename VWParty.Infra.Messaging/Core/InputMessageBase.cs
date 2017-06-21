@@ -10,6 +10,6 @@ namespace VWParty.Infra.Messaging.Core
     {
         //public string requestId { get; set; }
         //public DateTime requestStartUtcTime { get; set; }
-        public string correlationId { get; set; }
+        //public string correlationId { get; set; }
     }
 }
