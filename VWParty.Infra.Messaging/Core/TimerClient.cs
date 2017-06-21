@@ -15,20 +15,24 @@ namespace VWParty.Infra.Messaging.Core
         private string _parent_exchangeName = null;
         private string _parent_exchangeType = null;
 
-        public TimerClient(string queueName) : base("scheduler")
+
+        protected TimerClient(string schedulerQueueName, string forwardQueueName, string forwardExchangeName, string forwardExchangeType) : base(schedulerQueueName)
         {
-            this._parent_queueName = queueName;
+            this._parent_queueName = forwardQueueName;
+            this._parent_exchangeName = forwardExchangeName;
+            this._parent_exchangeType = forwardExchangeType;
         }
 
-        public TimerClient(string exchangeName, string exchangeType) : base("scheduler")
-        {
-            this._parent_exchangeName = exchangeName;
-            this._parent_exchangeType = exchangeType;
-        }
+        public TimerClient(string queueName) : this("scheduler", queueName, null, null) { }
+
+        public TimerClient(string exchangeName, string exchangeType) : this("scheduler", null, exchangeName, exchangeType) { }
 
         public async Task PublishAsync(string routing, TInputMessage message, TimeSpan delay)
         {
             await this.PublishMessageAsync(
+                this.IsWaitReturn,
+                MessageBusConfig.DefaultWaitReplyTimeOut,
+                MessageBusConfig.DefaultMessageExpirationTimeout,
                 routing, 
                 new TimerMessage()
                 {
@@ -41,8 +45,9 @@ namespace VWParty.Infra.Messaging.Core
                     QueueName = this._parent_queueName,
                     MessageText = JsonConvert.SerializeObject(message)
                 },
+                MessageBusConfig.DefaultRetryCount,
+                MessageBusConfig.DefaultRetryWaitTime,
                 LogTrackerContext.Current);
         }
-
     }
 }

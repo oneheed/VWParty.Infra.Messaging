@@ -8,18 +8,12 @@ using VWParty.Infra.LogTracking;
 
 namespace VWParty.Infra.Messaging.Core
 {
-    internal class MessagePack
-    {
-        public TimerMessage _message;
-        public LogTrackerContext _context;
-    }
+
 
     public class TimerServer : MessageServerBase<TimerMessage>
     {
-        public TimerServer() : base("scheduler")
-        {
-
-        }
+        protected TimerServer(string queueName) : base(queueName) { }
+        public TimerServer() : this("scheduler") { }
 
         private List<MessagePack> schedule = new List<MessagePack>();
 
@@ -40,21 +34,31 @@ namespace VWParty.Infra.Messaging.Core
         }
 
 
-
-
-
-
-        private bool _stop_forwarder = false;
-        public void StopForwarder()
+        public override async Task StartWorkersAsync(int worker_count)
         {
-            _stop_forwarder = true;
+            var worker = base.StartWorkersAsync(worker_count);
+            var forwarder = Task.Run(() => { this.ForwardMessage(); });
+
+            await worker;
+
+            //_stop_forwarder = true;
             this.outputWait.Set();
+            await forwarder;
         }
 
-        public void ForwardMessage()
+
+        //private bool _stop_forwarder = false;
+        //public void StopForwarder()
+        //{
+        //    _stop_forwarder = true;
+        //    this.outputWait.Set();
+        //}
+
+        private void ForwardMessage()
         {
-            _stop_forwarder = false;
-            while (_stop_forwarder == false)
+            //_stop_forwarder = false;
+            //while (_stop_forwarder == false)
+            while(this.Status != WorkerStatusEnum.STOPPED)
             {
                 while (this.schedule.Count > 0)
                 {
@@ -83,8 +87,14 @@ namespace VWParty.Infra.Messaging.Core
 
                         lock (schedule) schedule.Remove(msgpack);
                         mcb.PublishMessageAsync(
+                            mcb.IsWaitReturn,
+                            MessageBusConfig.DefaultWaitReplyTimeOut,
+                            MessageBusConfig.DefaultMessageExpirationTimeout,
                             msg.RouteKey, 
                             Encoding.Unicode.GetBytes(msg.MessageText),
+                            null,
+                            MessageBusConfig.DefaultRetryCount,
+                            MessageBusConfig.DefaultRetryWaitTime,
                             ctx).Wait();
                     }
                     else if (outputWait.WaitOne(msg.RunAt - DateTime.UtcNow) == false)
@@ -95,8 +105,14 @@ namespace VWParty.Infra.Messaging.Core
                         lock (schedule) schedule.Remove(msgpack);
                         //stp.PublishMessage(msg.RouteKey, msg);
                         mcb.PublishMessageAsync(
+                            mcb.IsWaitReturn,
+                            MessageBusConfig.DefaultWaitReplyTimeOut,
+                            MessageBusConfig.DefaultMessageExpirationTimeout,
                             msg.RouteKey,
                             Encoding.Unicode.GetBytes(msg.MessageText),
+                            null,
+                            MessageBusConfig.DefaultRetryCount,
+                            MessageBusConfig.DefaultRetryWaitTime,
                             ctx).Wait();
                     }
                     else
@@ -112,13 +128,20 @@ namespace VWParty.Infra.Messaging.Core
 
                     if (this.Status == WorkerStatusEnum.STOPPED)
                     {
-                        // do shutdown work
+                        // ToDo: do shutdown work
                         return;
                     }
                 }
 
                 this.outputWait.WaitOne();
             }
+        }
+
+
+        private class MessagePack
+        {
+            public TimerMessage _message;
+            public LogTrackerContext _context;
         }
     }
 }

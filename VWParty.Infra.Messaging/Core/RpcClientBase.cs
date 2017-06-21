@@ -26,12 +26,32 @@ namespace VWParty.Infra.Messaging.Core
 
         public virtual TOutputMessage Call(string routing, TInputMessage message)
         {
-            return this.PublishMessageAsync(routing, message, LogTrackerContext.Current).Result;
+            //return this.PublishMessageAsync(routing, message, LogTrackerContext.Current).Result;
+            return this.PublishMessageAsync(
+                this.IsWaitReturn,
+                MessageBusConfig.DefaultWaitReplyTimeOut,
+                MessageBusConfig.DefaultMessageExpirationTimeout,
+                routing,
+                message,
+                MessageBusConfig.DefaultRetryCount,
+                MessageBusConfig.DefaultRetryWaitTime,
+                LogTrackerContext.Current).Result;
+
         }
 
         public virtual async Task<TOutputMessage> CallAsync(string routing, TInputMessage message)
         {
-            return await this.PublishMessageAsync(routing, message, LogTrackerContext.Current);
+            //return await this.PublishMessageAsync(routing, message, LogTrackerContext.Current);
+            return await this.PublishMessageAsync(
+                this.IsWaitReturn,
+                MessageBusConfig.DefaultWaitReplyTimeOut,
+                MessageBusConfig.DefaultMessageExpirationTimeout,
+                routing,
+                message,
+                MessageBusConfig.DefaultRetryCount,
+                MessageBusConfig.DefaultRetryWaitTime,
+                LogTrackerContext.Current);
+
         }
     }
 }

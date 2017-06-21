@@ -26,7 +26,15 @@ namespace VWParty.Infra.Messaging.Core
         
         public virtual async Task PublishAsync(string routing, TInputMessage message)
         {
-            await this.PublishMessageAsync(routing, message, LogTrackerContext.Current);
+            await this.PublishMessageAsync(
+                this.IsWaitReturn,
+                MessageBusConfig.DefaultWaitReplyTimeOut,
+                MessageBusConfig.DefaultMessageExpirationTimeout,
+                routing, 
+                message, 
+                MessageBusConfig.DefaultRetryCount,
+                MessageBusConfig.DefaultRetryWaitTime,
+                LogTrackerContext.Current);
         }
 
 

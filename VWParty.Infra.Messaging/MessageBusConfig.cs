@@ -11,12 +11,17 @@ namespace VWParty.Infra.Messaging
 {
     public class MessageBusConfig
     {
-        private static string DefaultName = "MessageBus";
+        private const string DefaultName = "MessageBus";
 
-        public static int DefaultRetryCount = 30;
-        public static TimeSpan DefaultRetryWaitTime = TimeSpan.FromSeconds(3.0);
+        public const int DefaultRetryCount = 30;
 
-        public static TimeSpan DefaultPullWaitTime = TimeSpan.FromMilliseconds(0);
+        public static readonly TimeSpan DefaultRetryWaitTime = TimeSpan.FromSeconds(3.0);
+        public static readonly TimeSpan DefaultPullWaitTime = TimeSpan.FromMilliseconds(0);
+
+
+        public static readonly TimeSpan DefaultWaitReplyTimeOut = TimeSpan.FromSeconds(15);
+        public static readonly TimeSpan DefaultMessageExpirationTimeout = TimeSpan.FromSeconds(30 * 60);
+
 
         public static ConnectionFactory DefaultConnectionFactory
         {
