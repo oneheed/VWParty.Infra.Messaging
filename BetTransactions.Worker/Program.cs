@@ -93,7 +93,7 @@ namespace BetTransactions.Worker
         {
             LogTrackerContext.Init(LogTrackerContextStorageTypeEnum.THREAD_DATASLOT, logtracker);
             _logger.Info(message.Id);
-            Console.WriteLine(message.Id);
+            //Console.WriteLine(message.Id);
             return;
         }
     }

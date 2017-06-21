@@ -117,18 +117,38 @@ namespace VWParty.Infra.Messaging.Core
 
                 try
                 {
+                    // TASK implement
+
+                    //this._stop = false;
+                    //this._is_restart = false;
+                    //Task[] tasks = new Task[worker_count];
+
+                    //for (int index = 0; index < worker_count; index++)
+                    //{
+                    //    tasks[index] = Task.Run(() => { this.StartProcessSubscribedMessage(process); });
+                    //}
+
+                    //this.Status = WorkerStatusEnum.STARTED;
+                    //foreach (Task t in tasks) await t;
+                    //this.Status = WorkerStatusEnum.STOPPED;
+
                     this._stop = false;
                     this._is_restart = false;
-                    Task[] tasks = new Task[worker_count];
+                    //Task[] tasks = new Task[worker_count];
+                    Thread[] threads = new Thread[worker_count];
 
                     for (int index = 0; index < worker_count; index++)
                     {
-                        tasks[index] = Task.Run(() => { this.StartProcessSubscribedMessage(process); });
+                        //tasks[index] = Task.Run(() => { this.StartProcessSubscribedMessage(process); });
+                        threads[index] = new Thread(() => { this.StartProcessSubscribedMessage(process); });
+                        threads[index].Start();
                     }
 
                     this.Status = WorkerStatusEnum.STARTED;
-                    foreach (Task t in tasks) await t;
+                    //foreach (Task t in tasks) await t;
+                    await Task.Run(() => { foreach (Thread t in threads) t.Join(); });
                     this.Status = WorkerStatusEnum.STOPPED;
+
                 }
                 catch (Exception ex)
                 {
