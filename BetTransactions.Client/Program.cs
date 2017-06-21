@@ -62,7 +62,7 @@ namespace BetTransactions.Client
                         break;
 
                     case "TIMER":
-                        btc.PublishAsync("letou", btm, TimeSpan.FromSeconds(5)).Wait();
+                        btc.PublishAsync("letou", btm, TimeSpan.FromSeconds(3)).Wait();
                         break;
                 }
                 

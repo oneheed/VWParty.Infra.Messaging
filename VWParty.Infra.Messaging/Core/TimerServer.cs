@@ -1,4 +1,5 @@
-﻿using System;
+﻿using NLog;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -18,6 +19,9 @@ namespace VWParty.Infra.Messaging.Core
         private List<MessagePack> schedule = new List<MessagePack>();
 
         public AutoResetEvent outputWait = new AutoResetEvent(false);
+
+
+        private static Logger _logger = LogManager.GetCurrentClassLogger();
 
         protected override void ExecuteSubscriberProcess(TimerMessage message, LogTrackerContext logtracker)
         {
@@ -83,7 +87,8 @@ namespace VWParty.Infra.Messaging.Core
                     if (msg.RunAt <= DateTime.UtcNow)
                     {
                         // do expired
-                        Console.WriteLine("Run Expired Task: {0}, {1}, {2}", msg.ID, msg.RouteKey, msg.RunAt);
+                        //Console.WriteLine("Run Expired Task: {0}, {1}, {2}", msg.ID, msg.RouteKey, msg.RunAt);
+                        _logger.Info("Run Expired Task: {0}, {1}, {2}", msg.ID, msg.RouteKey, msg.RunAt);
 
                         lock (schedule) schedule.Remove(msgpack);
                         mcb.PublishMessageAsync(
@@ -100,7 +105,8 @@ namespace VWParty.Infra.Messaging.Core
                     else if (outputWait.WaitOne(msg.RunAt - DateTime.UtcNow) == false)
                     {
                         // do now
-                        Console.WriteLine("Run OnTime Task: {0}, {1}, {2}", msg.ID, msg.RouteKey, msg.RunAt);
+                        // Console.WriteLine("Run OnTime Task: {0}, {1}, {2}", msg.ID, msg.RouteKey, msg.RunAt);
+                        _logger.Info("Run OnTime Task: {0}, {1}, {2}", msg.ID, msg.RouteKey, msg.RunAt);
 
                         lock (schedule) schedule.Remove(msgpack);
                         //stp.PublishMessage(msg.RouteKey, msg);
@@ -115,14 +121,14 @@ namespace VWParty.Infra.Messaging.Core
                             MessageBusConfig.DefaultRetryWaitTime,
                             ctx).Wait();
                     }
-                    else
-                    {
-                        Console.WriteLine("Next Job:");
-                        lock (schedule) foreach (MessagePack m in schedule)
-                        {
-                            Console.WriteLine("- [{0}][{1}], {2}", m._message.ID, m._message.RouteKey, m._message.RunAt);
-                        }
-                    }
+                    //else
+                    //{
+                    //    Console.WriteLine("Next Job:");
+                    //    lock (schedule) foreach (MessagePack m in schedule)
+                    //    {
+                    //        Console.WriteLine("- [{0}][{1}], {2}", m._message.ID, m._message.RouteKey, m._message.RunAt);
+                    //    }
+                    //}
 
                     mcb.Dispose();
 
