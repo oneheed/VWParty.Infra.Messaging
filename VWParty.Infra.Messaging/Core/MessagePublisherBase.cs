@@ -105,7 +105,10 @@ namespace VWParty.Infra.Messaging.Core
                 messageExpirationTimeout,
                 routing,
                 Encoding.Unicode.GetBytes(JsonConvert.SerializeObject(message)),
-                null,
+                new Dictionary<string, object>() {
+                    {"INPUT-MESSAGE-TYPE", typeof(TInputMessage).FullName },
+                    {"OUTPUT-MESSAGE-TYPE", typeof(TOutputMessage).FullName }
+                },
                 retryCount,
                 retryWaitTimeout,
                 tracker);
