@@ -99,16 +99,17 @@ namespace VWParty.Infra.Messaging.Core
             TimeSpan retryWaitTimeout,
             LogTrackerContext tracker)
         {
+            Dictionary<string, object> headers = new Dictionary<string, object>();
+            headers["INPUT-MESSAGE-TYPE"] = typeof(TInputMessage).FullName;
+            if (this.IsWaitReturn) headers["OUTPUT-MESSAGE-TYPE"] = typeof(TOutputMessage).FullName;
+
             return await this.PublishMessageAsync(
                 isWaitReply,
                 waitReplyTimeout,
                 messageExpirationTimeout,
                 routing,
                 Encoding.Unicode.GetBytes(JsonConvert.SerializeObject(message)),
-                new Dictionary<string, object>() {
-                    {"INPUT-MESSAGE-TYPE", typeof(TInputMessage).FullName },
-                    {"OUTPUT-MESSAGE-TYPE", typeof(TOutputMessage).FullName }
-                },
+                headers,
                 retryCount,
                 retryWaitTimeout,
                 tracker);

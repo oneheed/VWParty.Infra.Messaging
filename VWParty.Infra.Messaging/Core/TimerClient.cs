@@ -43,6 +43,8 @@ namespace VWParty.Infra.Messaging.Core
                     ExchangeName = this._parent_exchangeName,
                     ExchangeType = this._parent_exchangeType,
                     QueueName = this._parent_queueName,
+
+                    MessageType = typeof(TInputMessage).FullName,
                     MessageText = JsonConvert.SerializeObject(message)
                 },
                 MessageBusConfig.DefaultRetryCount,

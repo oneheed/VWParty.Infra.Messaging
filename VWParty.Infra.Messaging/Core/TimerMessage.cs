@@ -16,6 +16,7 @@ namespace VWParty.Infra.Messaging.Core
         public string QueueName { get; set; }
         public string ExchangeName { get; set; }
         public string ExchangeType { get; set; }
+        public string MessageType { get; set; }
         public string MessageText { get; set; }
     }
 }

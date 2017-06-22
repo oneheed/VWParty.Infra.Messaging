@@ -99,7 +99,10 @@ namespace VWParty.Infra.Messaging.Core
                             MessageBusConfig.DefaultMessageExpirationTimeout,
                             msg.RouteKey, 
                             Encoding.Unicode.GetBytes(msg.MessageText),
-                            null,
+                            new Dictionary<string, object>()
+                            {
+                                {"INPUT-MESSAGE-TYPE", msg.MessageType }
+                            },
                             MessageBusConfig.DefaultRetryCount,
                             MessageBusConfig.DefaultRetryWaitTime,
                             ctx).Wait();
