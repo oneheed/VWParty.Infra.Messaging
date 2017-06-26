@@ -33,6 +33,12 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BetTransactions.Worker", "B
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VWParty.Infra.Messaging.TimerWorker", "VWParty.Infra.Messaging.TimerWorker\VWParty.Infra.Messaging.TimerWorker.csproj", "{79347719-48F4-4381-97C4-55CD08DB553F}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{F9D8508D-0207-411B-A61F-7C44118D2815}"
+	ProjectSection(SolutionItems) = preProject
+		docs\slides.pptx = docs\slides.pptx
+		docs\worker_status_sequency_diagram.png = docs\worker_status_sequency_diagram.png
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -77,5 +83,6 @@ Global
 		{836072DB-1D43-4952-B97D-42258B071FF4} = {87EA894B-CCFD-42C6-B30C-A4E8CF2D5FBC}
 		{88E0724A-5A2E-4E3A-BB04-62E09035DAE1} = {87EA894B-CCFD-42C6-B30C-A4E8CF2D5FBC}
 		{E736051E-7F26-4247-AEBC-0CA49811FA2B} = {87EA894B-CCFD-42C6-B30C-A4E8CF2D5FBC}
+		{F9D8508D-0207-411B-A61F-7C44118D2815} = {AAE88513-0FF9-4918-BC6C-C60BA1B5BC3D}
 	EndGlobalSection
 EndGlobal

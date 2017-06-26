@@ -240,6 +240,16 @@ BetMessageServer.cs
 
 
 
+**Notes**
+呼叫 StartWorkersAsync() 時，背後會依序執行這幾件事:
+
+1. 確認起始狀態為 STOPPED (否則會觸發 Exception)
+2. 狀態改為 STARTING, 嘗試建立連線
+3. 連線建立完成，啟動指定數量的執行緒, 狀態改為 STARTED (到這裡為止，StartWorkerAsync() 會 return)
+4. 等待所有執行緒正常中止, 狀態改為 STOPPED。await StartWorkerAsync() 會 return
+
+![Worker Status Sequency Diagram](docs/worker_status_sequency_diagram.png)
+
 
 
 
