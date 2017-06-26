@@ -28,7 +28,18 @@ namespace VWParty.Infra.Messaging.Core
 
 
 
-        public WorkerStatusEnum Status = WorkerStatusEnum.STOPPED;
+        
+        public WorkerStatusEnum Status {
+            get
+            {
+                return this._status;
+            }
+            set
+            {
+                if (this._status != value) _logger.Info("worker status was changed: {0}", value);
+                this._status = value;
+            }
+        } private WorkerStatusEnum _status = WorkerStatusEnum.STOPPED;
 
         internal string QueueName { get; set; }
 
@@ -99,6 +110,9 @@ namespace VWParty.Infra.Messaging.Core
                 this.Status = WorkerStatusEnum.STARTING;
             }
 
+            //模擬測試 connection 建立過久，導致 worker 長時間處於 starting 狀態的問題。這狀態下呼叫 stopworker 會引發 exception
+            //Task.Delay(5000).Wait();
+
             ConnectionFactory cf = MessageBusConfig.DefaultConnectionFactory;
 
             while (retry_count > 0)
@@ -111,7 +125,7 @@ namespace VWParty.Infra.Messaging.Core
                 {
                     retry_count--;
                     _logger.Warn("connection create fail. restarting...");
-                    await Task.Delay(retry_timeout);
+                    Task.Delay(retry_timeout).Wait();
                     continue;
                 }
 
@@ -145,10 +159,12 @@ namespace VWParty.Infra.Messaging.Core
                     }
 
                     this.Status = WorkerStatusEnum.STARTED;
-                    //foreach (Task t in tasks) await t;
-                    await Task.Run(() => { foreach (Thread t in threads) t.Join(); });
-                    this.Status = WorkerStatusEnum.STOPPED;
 
+                    //foreach (Task t in tasks) await t;
+                    _logger.Info("waiting all worker threads to STOP...");
+                    await Task.Run(() => { foreach (Thread t in threads) t.Join(); });
+
+                    this.Status = WorkerStatusEnum.STOPPED;
                 }
                 catch (Exception ex)
                 {
@@ -176,12 +192,11 @@ namespace VWParty.Infra.Messaging.Core
 
         public virtual void StopWorkers()
         {
-            this._stop = true;
-
             switch (this.Status)
             {
                 case WorkerStatusEnum.STARTED:
                     this.Status = WorkerStatusEnum.STOPPING;
+                    this._stop = true;
                     break;
 
                 case WorkerStatusEnum.STARTING:

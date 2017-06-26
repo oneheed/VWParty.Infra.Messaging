@@ -16,7 +16,7 @@ namespace VWParty.Infra.Messaging
         public const int DefaultRetryCount = 30;
 
         public static readonly TimeSpan DefaultRetryWaitTime = TimeSpan.FromSeconds(3.0);
-        public static readonly TimeSpan DefaultPullWaitTime = TimeSpan.FromMilliseconds(0);
+        public static readonly TimeSpan DefaultPullWaitTime = TimeSpan.FromMilliseconds(30);
 
 
         public static readonly TimeSpan DefaultWaitReplyTimeOut = TimeSpan.FromSeconds(15);

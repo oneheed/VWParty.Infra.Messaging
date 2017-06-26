@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -13,17 +14,50 @@ namespace BetTransactions.Worker
 {
     class Program
     {
+
+        static BetRpcServer brs = null;
+        static AutoResetEvent w = new AutoResetEvent(false);
+        [DllImport("Kernel32")]
+        private static extern bool SetConsoleCtrlHandler(EventHandler handler, bool add);
+
+        private delegate bool EventHandler(CtrlType sig);
+        //static EventHandler _handler;
+        enum CtrlType
+        {
+            CTRL_C_EVENT = 0,
+            CTRL_BREAK_EVENT = 1,
+            CTRL_CLOSE_EVENT = 2,
+            CTRL_LOGOFF_EVENT = 5,
+            CTRL_SHUTDOWN_EVENT = 6
+        }
+        private static bool ShutdownHandler(CtrlType sig)
+        {
+            _logger.Info("Shutdown Console Apps...");
+            brs.StopWorkers();
+            w.Set();
+            _logger.Info("Shutdown Console Apps2...");
+            return true;
+        }
+
+
+
+
+
+
         static Logger _logger = LogManager.GetCurrentClassLogger();
 
         static void Main(string[] args)
         {
+
             //using (BetRpcServer brs = new BetRpcServer())
-            using (BetMessageServer brs = new BetMessageServer())
+            using ( brs = new BetRpcServer())
             {
                 var x = brs.StartWorkersAsync(10);
+                SetConsoleCtrlHandler(ShutdownHandler, true);
 
-                Console.WriteLine("PRESS [ENTER] To Exit...");
-                Console.ReadLine();
+                //Console.WriteLine("PRESS [ENTER] To Exit...");
+                //Console.ReadLine();
+                w.WaitOne();
 
                 brs.StopWorkers();
                 x.Wait();
