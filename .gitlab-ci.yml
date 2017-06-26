@@ -14,8 +14,8 @@ develop_build_job:
   only:
   - develop
   variables:
-  - BUILD_TARGET: "-BETA"
-  - BUILD_CONFIG: "Debug"
+    BUILD_TARGET: "-BETA"
+    BUILD_CONFIG: "Debug"
   script:
   - c:\Multi-Runner\nuget.exe restore
   - '"c:\Program Files (x86)\MSBuild\14.0\Bin\amd64\MSBuild.exe" /p:Configuration=%BUILD_CONFIG%   /p:Platform="Any CPU" VWParty.Infra.Messaging.sln'
@@ -29,8 +29,8 @@ master_build_job:
   only:
   - master
   variables:
-  - BUILD_TARGET: ""
-  - BUILD_CONFIG: "Release"
+    BUILD_TARGET: ""
+    BUILD_CONFIG: "Release"
   script:
   - c:\Multi-Runner\nuget.exe restore
   - '"c:\Program Files (x86)\MSBuild\14.0\Bin\amd64\MSBuild.exe" /p:Configuration=%BUILD_CONFIG% /p:Platform="Any CPU" VWParty.Infra.Messaging.sln'
