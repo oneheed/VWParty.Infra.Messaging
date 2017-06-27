@@ -287,7 +287,6 @@ namespace VWParty.Infra.Messaging.Core
                         _logger.Trace("WorkerThread({0}) - before processing message: {1}", Thread.CurrentThread.ManagedThreadId, props.MessageId);
                         response = process(request, logtracker);
 
-                        // TODO: 如果 process( ) 出現 exception, 目前的 code 還無法有效處理
                         _logger.Trace("WorkerThread({0}) - message was processed: {1}", Thread.CurrentThread.ManagedThreadId, props.MessageId);
                     }
                     catch (Exception e)

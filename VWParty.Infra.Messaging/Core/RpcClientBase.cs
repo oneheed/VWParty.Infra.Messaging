@@ -70,7 +70,7 @@ namespace VWParty.Infra.Messaging.Core
                 MessageBusConfig.DefaultRetryWaitTime,
                 LogTrackerContext.Current);
 
-            if (output != null && output.exception != null)
+            if (output != null && string.IsNullOrWhiteSpace(output.exception) == false)
             {
                 throw new RpcServerException()
                 {
