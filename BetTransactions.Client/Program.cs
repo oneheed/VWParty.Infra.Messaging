@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using VWParty.Infra.LogTracking;
+using VWParty.Infra.Messaging;
 using VWParty.Infra.Messaging.BetTransactions;
 using VWParty.Infra.Messaging.Core;
 
@@ -25,6 +26,7 @@ namespace BetTransactions.Client
             BetTimerClient btc = null;
 
             LogTrackerContext.Create("POC/BetTransactions.Client", LogTrackerContextStorageTypeEnum.THREAD_DATASLOT);
+            _logger.Info("Init...");
 
             switch (mode)
             {
@@ -58,7 +60,15 @@ namespace BetTransactions.Client
                         break;
 
                     case "SYNC":
-                        OutputMessageBase omb = brc.CallAsync("letou", btm).Result;
+                        try
+                        {
+                            OutputMessageBase omb = brc.CallAsync("letou", btm).Result;
+                        }
+                        catch(AggregateException ae)
+                        {
+                            foreach(Exception ex in ae.InnerExceptions)
+                                Console.WriteLine(ex);
+                        }
                         break;
 
                     case "TIMER":
@@ -122,6 +132,20 @@ namespace BetTransactions.Client
         {
 
         }
+
+        //public LogTrackerContext Tracker = null;
+        //public override Task PublishAsync(string routing, BetTransactionMessage message)
+        //{
+        //    return this.PublishMessageAsync(
+        //        this.IsWaitReturn,
+        //        MessageBusConfig.DefaultWaitReplyTimeOut,
+        //        MessageBusConfig.DefaultMessageExpirationTimeout,
+        //        routing,
+        //        message,
+        //        MessageBusConfig.DefaultRetryCount,
+        //        MessageBusConfig.DefaultRetryWaitTime,
+        //        this.Tracker);
+        //}
     }
 
     public class BetRpcClient : RpcClientBase<BetTransactionMessage, OutputMessageBase>

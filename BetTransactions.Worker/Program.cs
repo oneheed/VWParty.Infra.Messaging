@@ -33,7 +33,7 @@ namespace BetTransactions.Worker
         private static bool ShutdownHandler(CtrlType sig)
         {
             _logger.Info("Shutdown Console Apps...");
-            brs.StopWorkers();
+            //brs.StopWorkers();
             w.Set();
             _logger.Info("Shutdown Console Apps2...");
             return true;
@@ -66,37 +66,38 @@ namespace BetTransactions.Worker
             }
         }
 
-/*
-        static void _Main(string[] args)
-        {
-
-            using (BetMessageSubscriber bus = new BetMessageSubscriber("bet_test"))
-            {
-                var result = bus.StartWorkersAsync((bm, tracker) =>
+        
+        /*
+                static void _Main(string[] args)
                 {
-                    LogTrackerContext.Init(LogTrackerContextStorageTypeEnum.THREAD_DATASLOT, tracker);
-                    //Console.WriteLine("[{0:00}] {1} ...", Thread.CurrentThread.ManagedThreadId, bm.Id);
-                    _logger.Info(bm.Id);
-                    return new VWParty.Infra.Messaging.Core.OutputMessageBase();
-                }, 10);
 
-                Console.WriteLine("PRESS [ENTER] To Exit...");
-                Console.ReadLine();
+                    using (BetMessageSubscriber bus = new BetMessageSubscriber("bet_test"))
+                    {
+                        var result = bus.StartWorkersAsync((bm, tracker) =>
+                        {
+                            LogTrackerContext.Init(LogTrackerContextStorageTypeEnum.THREAD_DATASLOT, tracker);
+                            //Console.WriteLine("[{0:00}] {1} ...", Thread.CurrentThread.ManagedThreadId, bm.Id);
+                            _logger.Info(bm.Id);
+                            return new VWParty.Infra.Messaging.Core.OutputMessageBase();
+                        }, 10);
+
+                        Console.WriteLine("PRESS [ENTER] To Exit...");
+                        Console.ReadLine();
 
 
-                Console.WriteLine("Shutdown worker...");
-                _logger.Info("Shutdown worker...");
+                        Console.WriteLine("Shutdown worker...");
+                        _logger.Info("Shutdown worker...");
 
-                bus.StopWorkers();
-                result.Wait();
+                        bus.StopWorkers();
+                        result.Wait();
 
-                Console.WriteLine("Shutdown complete.");
-                _logger.Info("Shutdown complete.");
+                        Console.WriteLine("Shutdown complete.");
+                        _logger.Info("Shutdown complete.");
 
-            }
-            
-        }
-*/
+                    }
+
+                }
+        */
     }
 
     public class BetRpcServer: RpcServerBase<BetTransactionMessage, OutputMessageBase>
@@ -110,9 +111,16 @@ namespace BetTransactions.Worker
 
         protected override OutputMessageBase ExecuteSubscriberProcess(BetTransactionMessage message, LogTrackerContext logtracker)
         {
+            //throw new Exception("TEST");
+
             LogTrackerContext.Init(LogTrackerContextStorageTypeEnum.THREAD_DATASLOT, logtracker);
             _logger.Info(message.Id);
-            return new VWParty.Infra.Messaging.Core.OutputMessageBase();
+
+            //Console.Write("start: {0}", message.Id);
+            //Task.Delay(1000 * 10).Wait();
+            //Console.Write("end: {0}", message.Id);
+
+            return new OutputMessageBase();
         }
     }
 
@@ -127,6 +135,7 @@ namespace BetTransactions.Worker
         {
             LogTrackerContext.Init(LogTrackerContextStorageTypeEnum.THREAD_DATASLOT, logtracker);
             _logger.Info(message.Id);
+
             //Console.WriteLine(message.Id);
             return;
         }

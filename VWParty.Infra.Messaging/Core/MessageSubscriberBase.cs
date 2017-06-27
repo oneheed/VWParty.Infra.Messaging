@@ -22,7 +22,7 @@ namespace VWParty.Infra.Messaging.Core
 
     public abstract class MessageSubscriberBase<TInputMessage, TOutputMessage> : IDisposable
         where TInputMessage : InputMessageBase
-        where TOutputMessage : OutputMessageBase
+        where TOutputMessage : OutputMessageBase, new()
     {
         private static Logger _logger = LogManager.GetCurrentClassLogger();
 
@@ -268,7 +268,7 @@ namespace VWParty.Infra.Messaging.Core
                     if (props.Headers == null || props.Headers[LogTrackerContext._KEY_REQUEST_ID] == null)
                     {
                         // message without logtracker context info
-                        logtracker = LogTrackerContext.Create(LogTrackerContextStorageTypeEnum.NONE);
+                        logtracker = LogTrackerContext.Create(this.GetType().FullName, LogTrackerContextStorageTypeEnum.NONE);
                     }
                     else
                     {
@@ -286,13 +286,16 @@ namespace VWParty.Infra.Messaging.Core
                         TInputMessage request = JsonConvert.DeserializeObject<TInputMessage>(Encoding.Unicode.GetString(body));
                         _logger.Trace("WorkerThread({0}) - before processing message: {1}", Thread.CurrentThread.ManagedThreadId, props.MessageId);
                         response = process(request, logtracker);
+
                         // TODO: 如果 process( ) 出現 exception, 目前的 code 還無法有效處理
                         _logger.Trace("WorkerThread({0}) - message was processed: {1}", Thread.CurrentThread.ManagedThreadId, props.MessageId);
                     }
                     catch (Exception e)
                     {
-                        //response = default(TOutputMessage);
-                        //response.exception = e.ToString();
+                        response = new TOutputMessage()
+                        {
+                            exception = e.ToString()
+                        };
                         _logger.Warn(e, "WorkerThread({0}) - process message with exception: {1}, ex: {2}", Thread.CurrentThread.ManagedThreadId, props.MessageId, e);
                     }
 
