@@ -111,10 +111,10 @@ namespace BetTransactions.Worker
 
         protected override OutputMessageBase ExecuteSubscriberProcess(BetTransactionMessage message, LogTrackerContext logtracker)
         {
-            //throw new Exception("TEST");
-
             LogTrackerContext.Init(LogTrackerContextStorageTypeEnum.THREAD_DATASLOT, logtracker);
             _logger.Info(message.Id);
+
+            //throw new Exception("TEST");
 
             //Console.Write("start: {0}", message.Id);
             //Task.Delay(1000 * 10).Wait();

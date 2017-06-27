@@ -23,7 +23,7 @@ namespace VWParty.Infra.Messaging.Core
             this.IsWaitReturn = true;
         }
 
-        [Obsolete("", true)]
+        //[Obsolete("", true)]
         public virtual TOutputMessage Call(string routing, TInputMessage message)
         {
             //return this.PublishMessageAsync(routing, message, LogTrackerContext.Current).Result;
@@ -37,7 +37,24 @@ namespace VWParty.Infra.Messaging.Core
             //    MessageBusConfig.DefaultRetryWaitTime,
             //    LogTrackerContext.Current).Result;
 
-            throw new NotSupportedException();
+            //throw new NotSupportedException();
+            //TOutputMessage output = null;
+
+            //return this.CallAsync(routing, message).Result;
+
+            try
+            {
+                return this.CallAsync(routing, message).Result;
+            }
+            catch (AggregateException ae)
+            {
+                foreach (Exception ex in ae.InnerExceptions)
+                {
+                    if (ex is RpcServerException) throw ex;
+                }
+
+                throw;
+            }
         }
 
         public virtual async Task<TOutputMessage> CallAsync(string routing, TInputMessage message)
@@ -53,7 +70,7 @@ namespace VWParty.Infra.Messaging.Core
                 MessageBusConfig.DefaultRetryWaitTime,
                 LogTrackerContext.Current);
 
-            if (output.exception != null)
+            if (output != null && output.exception != null)
             {
                 throw new RpcServerException()
                 {

@@ -60,14 +60,25 @@ namespace BetTransactions.Client
                         break;
 
                     case "SYNC":
+                        // async sample
+                        //try
+                        //{
+                        //    OutputMessageBase omb = brc.CallAsync("letou", btm).Result;
+                        //}
+                        //catch(AggregateException ae)
+                        //{
+                        //    foreach(Exception ex in ae.InnerExceptions)
+                        //        if (ex is RpcServerException) Console.WriteLine("RpcServerException.Source: {0}", (ex as RpcServerException).Source);
+                        //}
+
+                        // sync sample
                         try
                         {
-                            OutputMessageBase omb = brc.CallAsync("letou", btm).Result;
+                            OutputMessageBase omb = brc.Call("letou", btm);
                         }
-                        catch(AggregateException ae)
+                        catch(RpcServerException rse)
                         {
-                            foreach(Exception ex in ae.InnerExceptions)
-                                Console.WriteLine(ex);
+                            Console.WriteLine("\r\nRpcServerException: {0}", rse.Source);
                         }
                         break;
 
