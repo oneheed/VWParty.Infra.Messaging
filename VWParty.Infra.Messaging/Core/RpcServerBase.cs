@@ -9,7 +9,7 @@ namespace VWParty.Infra.Messaging.Core
 {
     public abstract class RpcServerBase<TInputMessage, TOutputMessage> : MessageSubscriberBase<TInputMessage, TOutputMessage>
         where TInputMessage : InputMessageBase
-        where TOutputMessage : OutputMessageBase
+        where TOutputMessage : OutputMessageBase, new()
     {
         protected RpcServerBase(string queueName)
             : base(queueName)
@@ -33,10 +33,10 @@ namespace VWParty.Infra.Messaging.Core
                 MessageBusConfig.DefaultRetryWaitTime);
         }
 
-        protected virtual TOutputMessage ExecuteSubscriberProcess(TInputMessage message, LogTrackerContext logtracker)
-        {
-            return null;
-        }
+        protected abstract TOutputMessage ExecuteSubscriberProcess(TInputMessage message, LogTrackerContext logtracker);
+        //{
+        //    return null;
+        //}
 
     }
 }

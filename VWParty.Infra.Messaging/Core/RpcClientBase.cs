@@ -23,26 +23,44 @@ namespace VWParty.Infra.Messaging.Core
             this.IsWaitReturn = true;
         }
 
-
+        //[Obsolete("", true)]
         public virtual TOutputMessage Call(string routing, TInputMessage message)
         {
             //return this.PublishMessageAsync(routing, message, LogTrackerContext.Current).Result;
-            return this.PublishMessageAsync(
-                this.IsWaitReturn,
-                MessageBusConfig.DefaultWaitReplyTimeOut,
-                MessageBusConfig.DefaultMessageExpirationTimeout,
-                routing,
-                message,
-                MessageBusConfig.DefaultRetryCount,
-                MessageBusConfig.DefaultRetryWaitTime,
-                LogTrackerContext.Current).Result;
+            //return this.PublishMessageAsync(
+            //    this.IsWaitReturn,
+            //    MessageBusConfig.DefaultWaitReplyTimeOut,
+            //    MessageBusConfig.DefaultMessageExpirationTimeout,
+            //    routing,
+            //    message,
+            //    MessageBusConfig.DefaultRetryCount,
+            //    MessageBusConfig.DefaultRetryWaitTime,
+            //    LogTrackerContext.Current).Result;
 
+            //throw new NotSupportedException();
+            //TOutputMessage output = null;
+
+            //return this.CallAsync(routing, message).Result;
+
+            try
+            {
+                return this.CallAsync(routing, message).Result;
+            }
+            catch (AggregateException ae)
+            {
+                foreach (Exception ex in ae.InnerExceptions)
+                {
+                    if (ex is RpcServerException) throw ex;
+                }
+
+                throw;
+            }
         }
 
         public virtual async Task<TOutputMessage> CallAsync(string routing, TInputMessage message)
         {
             //return await this.PublishMessageAsync(routing, message, LogTrackerContext.Current);
-            return await this.PublishMessageAsync(
+            TOutputMessage output = await this.PublishMessageAsync(
                 this.IsWaitReturn,
                 MessageBusConfig.DefaultWaitReplyTimeOut,
                 MessageBusConfig.DefaultMessageExpirationTimeout,
@@ -52,6 +70,20 @@ namespace VWParty.Infra.Messaging.Core
                 MessageBusConfig.DefaultRetryWaitTime,
                 LogTrackerContext.Current);
 
+            if (output != null && string.IsNullOrWhiteSpace(output.exception) == false)
+            {
+                throw new RpcServerException()
+                {
+                    Source = output.exception
+                };
+            }
+
+            return output;
         }
+    }
+
+    public class RpcServerException : Exception
+    {
+
     }
 }

@@ -12,7 +12,7 @@ using VWParty.Infra.Messaging.Core;
 
 namespace VWParty.Infra.Messaging.RPCWorkers
 {
-    public class WorkerQueue : RpcServerBase<RequestMessage, ResponseMessage> //MessageSubscriberBase<RequestMessage, ResponseMessage>
+    public abstract class WorkerQueue : RpcServerBase<RequestMessage, ResponseMessage> //MessageSubscriberBase<RequestMessage, ResponseMessage>
     {
         private static Logger _logger = LogManager.GetCurrentClassLogger();
         public string CurrentZeusRequestId

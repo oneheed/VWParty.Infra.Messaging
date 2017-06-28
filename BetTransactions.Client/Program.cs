@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using VWParty.Infra.LogTracking;
+using VWParty.Infra.Messaging;
 using VWParty.Infra.Messaging.BetTransactions;
 using VWParty.Infra.Messaging.Core;
 
@@ -25,6 +26,7 @@ namespace BetTransactions.Client
             BetTimerClient btc = null;
 
             LogTrackerContext.Create("POC/BetTransactions.Client", LogTrackerContextStorageTypeEnum.THREAD_DATASLOT);
+            _logger.Info("Init...");
 
             switch (mode)
             {
@@ -58,7 +60,26 @@ namespace BetTransactions.Client
                         break;
 
                     case "SYNC":
-                        OutputMessageBase omb = brc.CallAsync("letou", btm).Result;
+                        // async sample
+                        //try
+                        //{
+                        //    OutputMessageBase omb = brc.CallAsync("letou", btm).Result;
+                        //}
+                        //catch(AggregateException ae)
+                        //{
+                        //    foreach(Exception ex in ae.InnerExceptions)
+                        //        if (ex is RpcServerException) Console.WriteLine("RpcServerException.Source: {0}", (ex as RpcServerException).Source);
+                        //}
+
+                        // sync sample
+                        try
+                        {
+                            OutputMessageBase omb = brc.Call("letou", btm);
+                        }
+                        catch(RpcServerException rse)
+                        {
+                            Console.WriteLine("\r\nRpcServerException: {0}", rse.Source);
+                        }
                         break;
 
                     case "TIMER":
@@ -122,6 +143,20 @@ namespace BetTransactions.Client
         {
 
         }
+
+        //public LogTrackerContext Tracker = null;
+        //public override Task PublishAsync(string routing, BetTransactionMessage message)
+        //{
+        //    return this.PublishMessageAsync(
+        //        this.IsWaitReturn,
+        //        MessageBusConfig.DefaultWaitReplyTimeOut,
+        //        MessageBusConfig.DefaultMessageExpirationTimeout,
+        //        routing,
+        //        message,
+        //        MessageBusConfig.DefaultRetryCount,
+        //        MessageBusConfig.DefaultRetryWaitTime,
+        //        this.Tracker);
+        //}
     }
 
     public class BetRpcClient : RpcClientBase<BetTransactionMessage, OutputMessageBase>

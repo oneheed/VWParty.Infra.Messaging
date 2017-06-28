@@ -44,7 +44,7 @@ namespace VWParty.Infra.Messaging.RPCWorkers
         [Obsolete("向前相容用，請改用 Call() or CallAsync() 代替", true)]
         public ResponseMessage CallWorkerProcess(RequestMessage request)
         {
-            return this.Call(null, request);
+            return this.CallAsync(null, request).Result;
         }
 
     }
