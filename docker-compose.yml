@@ -2,6 +2,7 @@ version: '2.1'
 services:
   worker:
     image: runner/taskscheduler_worker:latest
+#    image: runner/taskscheduler_worker:stable
 
 networks:
   default:
