@@ -24,7 +24,6 @@ develop_build_job:
   - c:\Multi-Runner\nuget.exe pack VWParty.Infra.Messaging\VWParty.Infra.Messaging.csproj -Properties Configuration=%BUILD_CONFIG% -Version %BUILD_VERSION%%BUILD_TARGET% -Symbols
   - c:\Multi-Runner\nuget.exe push VWParty.Infra.Messaging.%BUILD_VERSION%%BUILD_TARGET%.nupkg -ApiKey %NUGET_APIKEY% -Source %NUGET_SERVER% -SymbolSource %NUGET_SERVER% %NUGET_PUSH_OPT%
   - docker build --no-cache --force-rm %DOCKER_TAG% -t runner/taskscheduler_worker:%BUILD_VERSION%%BUILD_TARGET% VWParty.Infra.Messaging.TimerWorker\bin\%BUILD_CONFIG%\
-
   - docker-compose up -d --force-recreate
 
 master_build_job:
@@ -43,5 +42,4 @@ master_build_job:
   - c:\Multi-Runner\nuget.exe pack VWParty.Infra.Messaging\VWParty.Infra.Messaging.csproj -Properties Configuration=%BUILD_CONFIG% -Version %BUILD_VERSION%%BUILD_TARGET% -Symbols
   - c:\Multi-Runner\nuget.exe push VWParty.Infra.Messaging.%BUILD_VERSION%%BUILD_TARGET%.nupkg -ApiKey %NUGET_APIKEY% -Source %NUGET_SERVER% -SymbolSource %NUGET_SERVER% %NUGET_PUSH_OPT%
   - docker build --no-cache --force-rm %DOCKER_TAG% -t runner/taskscheduler_worker:%BUILD_VERSION%%BUILD_TARGET% VWParty.Infra.Messaging.TimerWorker\bin\%BUILD_CONFIG%\
-
 #  - docker-compose up -d --force-recreate
