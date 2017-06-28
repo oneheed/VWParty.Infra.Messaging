@@ -34,7 +34,7 @@ master_build_job:
     BUILD_TARGET: ""
     BUILD_CONFIG: "Release"
     NUPKG_PUSH_OPT: "-NoSymbols"
-    DOCKER_TAG: "-t runner/taskscheduler_worker:stable"
+    DOCKER_TAG: "-t runner/taskscheduler_worker:latest -t runner/taskscheduler_worker:stable"
   script:
 # 以下的 scripts 維持與 develop 的完全一致。差異的部分都已集中到每個 job 的 variable(s)
   - c:\Multi-Runner\nuget.exe restore
