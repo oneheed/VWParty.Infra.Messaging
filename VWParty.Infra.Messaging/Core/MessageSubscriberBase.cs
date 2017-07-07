@@ -245,6 +245,12 @@ namespace VWParty.Infra.Messaging.Core
                     }
                     catch (Exception ex)
                     {
+                        if (!_connection.IsOpen || channel.IsClosed)
+                        {
+                            _logger.Trace("WorkerThread({0}) message channel is closed. Reason: {1}", Thread.CurrentThread.ManagedThreadId,
+                                _connection.IsOpen ? channel.CloseReason : _connection.CloseReason);
+                        }
+
                         this._stop = true;
                         this._is_restart = true;
                         _logger.Warn(ex, "dequeue exception, restart subscriber...");
@@ -324,6 +330,12 @@ namespace VWParty.Infra.Messaging.Core
                     {
                         // connection fail while return message or ack.
                         // just shutdown and ignore it. non-return ack will be ignore, message will retry in next time
+                        if (!_connection.IsOpen || channel.IsClosed)
+                        {
+                            _logger.Trace("WorkerThread({0}) message channel is closed. Reason: {1}", Thread.CurrentThread.ManagedThreadId,
+                                _connection.IsOpen ? channel.CloseReason : _connection.CloseReason);
+                        }
+
                         this._stop = true;
                         this._is_restart = true;
                         _logger.Warn(ex, "dequeue exception, restart subscriber...");
