@@ -15,6 +15,7 @@ namespace VWParty.Infra.Messaging.BetTransactions
         public string PlatformCode { get; set; }
         public string GameId { get; set; }
         public string AccountId { get; set; }
+        public string AccountSN { get; set; }
         public string BetId { get; set; }
         public string TransactionNumber { get; set; }
         public string RoundId { get; set; }
