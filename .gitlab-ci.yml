@@ -4,7 +4,7 @@ stages:
 variables:
   BUILD_VERSION: "0.7.8"
   NUGET_APIKEY: "0F2DB634-4E83-4659-8068-EF552DDC4072"
-  NUGET_SERVER: "http://nuget.66.net/nuget/"
+  NUGET_SERVER: "http://nuget.66.net"
 
 before_script:
   - set
