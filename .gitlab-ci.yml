@@ -4,7 +4,7 @@ stages:
 variables:
   BUILD_VERSION: "0.7.8"
   NUGET_APIKEY: "0F2DB634-4E83-4659-8068-EF552DDC4072"
-  NUGET_SERVER: "http://172.20.5.15/nugetServer/"
+  NUGET_SERVER: "http://172.20.5.55/nugetServer/"
 
 before_script:
   - set
@@ -36,7 +36,7 @@ master_build_job:
     NUPKG_PUSH_OPT: "-NoSymbols"
     DOCKER_TAG: "-t runner/taskscheduler_worker:latest -t runner/taskscheduler_worker:stable"
   script:
-# ¥H¤Uªº scripts ºû«ù»P develop ªº§¹¥ş¤@­P¡C®t²§ªº³¡¤À³£¤w¶°¤¤¨ì¨C­Ó job ªº variable(s)
+# ä»¥ä¸‹çš„ scripts ç¶­æŒèˆ‡ develop çš„å®Œå…¨ä¸€è‡´ã€‚å·®ç•°çš„éƒ¨åˆ†éƒ½å·²é›†ä¸­åˆ°æ¯å€‹ job çš„ variable(s)
   - c:\Multi-Runner\nuget.exe restore
   - '"c:\Program Files (x86)\MSBuild\14.0\Bin\amd64\MSBuild.exe" /p:Configuration=%BUILD_CONFIG% /p:Platform="Any CPU" VWParty.Infra.Messaging.sln'
   - c:\Multi-Runner\nuget.exe pack VWParty.Infra.Messaging\VWParty.Infra.Messaging.csproj -Properties Configuration=%BUILD_CONFIG% -Version %BUILD_VERSION%%BUILD_TARGET% -Symbols
